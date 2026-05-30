@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fuji Dashboard - Origami Edition</title>
+    <title>Fuji Sunrise Dashboard</title>
     <style>
         :root {
-            --bg-color: #0c1524;
+            --bg-color: #060913;
             --text-color: #f3f4f6;
             --accent-color: #f97316;
             --glass-bg: rgba(15, 23, 42, 0.45);
@@ -21,28 +21,6 @@
             z-index: 1;
         }
 
-        /* Interactive Origami Layer */
-        #origami-container {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            z-index: 5;
-            pointer-events: none;
-        }
-
-        /* Sophisticated Multi-Fold Origami Class */
-        .origami-bird {
-            position: absolute;
-            width: 55px;
-            height: 55px;
-            pointer-events: auto;
-            will-change: transform;
-        }
-        .origami-bird svg {
-            width: 100%;
-            height: 100%;
-            filter: drop-shadow(2px 3px 4px rgba(0,0,0,0.15));
-        }
-
         /* UI Navigation Layer */
         nav {
             position: fixed;
@@ -53,13 +31,13 @@
             align-items: center;
             z-index: 10;
         }
-        .logo { font-weight: 800; font-size: 1.4rem; letter-spacing: 2px; color: #fff; }
+        .logo { font-weight: 800; font-size: 1.4rem; cursor: pointer; letter-spacing: 2px; color: #fff; }
         .nav-links { display: flex; gap: 40px; list-style: none; }
         .nav-links a { 
-            color: #4b5563; text-decoration: none; font-size: 0.95rem; font-weight: 600;
-            transition: 0.3s; text-transform: uppercase; letter-spacing: 1px;
+            color: #9ca3af; text-decoration: none; font-size: 0.95rem; font-weight: 600;
+            transition: 0.3s; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
         }
-        .nav-links a.active { color: #000; border-bottom: 2px solid #000; padding-bottom: 4px; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent-color); text-shadow: 0 0 15px rgba(249,115,22,0.6); }
 
         /* Content Sidebar */
         .container {
@@ -84,20 +62,69 @@
             border-radius: 12px;
             padding: 24px;
             margin-bottom: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
         }
 
         h2 { font-size: 1.1rem; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: #fff; font-weight: 700; }
         p { line-height: 1.5; color: #9ca3af; font-size: 0.85rem; }
         .learn-more { color: #d1d5db; font-size: 0.8rem; text-decoration: none; display: block; margin-top: 12px; font-weight: 600; cursor: pointer;}
+
+        /* --- 🕊️ CSS Cartoon Bird Animation Framework --- */
+        .bird-group {
+            position: fixed;
+            top: 20vh;
+            left: -15vw;
+            width: 180px;
+            height: 120px;
+            z-index: 5; /* Sandwiched behind cards but in front of mountain */
+            pointer-events: none;
+            display: none;
+        }
+
+        /* Stylized vector wings using basic CSS borders */
+        .bird {
+            position: absolute;
+            width: 16px;
+            height: 8px;
+            opacity: 0.75;
+        }
+        .bird::before, .bird::after {
+            content: '';
+            position: absolute;
+            top: 0; width: 8px; height: 8px;
+            border-top: 2.5px solid #0a1833;
+            border-radius: 50% 50% 0 0;
+        }
+        .bird::before { left: 0; border-left: 2.5px solid #0a1833; transform-origin: right bottom; animation: flapLeft 0.4s ease-in-out infinite alternate; }
+        .bird::after { right: 0; border-right: 2.5px solid #0a1833; transform-origin: left bottom; animation: flapRight 0.4s ease-in-out infinite alternate; }
+
+        /* Flocking group position offsets */
+        .b1 { top: 20px; left: 10px; transform: scale(0.8); }
+        .b2 { top: 45px; left: 60px; transform: scale(1.0); }
+        .b3 { top: 15px; left: 110px; transform: scale(0.7); }
+        .b4 { top: 60px; left: 140px; transform: scale(0.9); }
+
+        @keyframes flapLeft  { 0% { transform: rotate(25deg); } 100% { transform: rotate(-35deg); } }
+        @keyframes flapRight { 0% { transform: rotate(-25deg); } 100% { transform: rotate(35deg); } }
+
+        @keyframes flyAcross {
+            0%   { left: -15vw; }
+            100% { left: 115vw; }
+        }
     </style>
 </head>
 <body>
 
     <canvas id="gpuCanvas"></canvas>
-    <div id="origami-container"></div>
 
-    <nav>
+    <div class="bird-group" id="birdSwarm">
+        <div class="bird b1"></div>
+        <div class="bird b2"></div>
+        <div class="bird b3"></div>
+        <div class="bird b4"></div>
+    </div>
+
+    <nav class="sidebar">
         <div class="logo">BABYLON//OS</div>
         <ul class="nav-links">
             <li><a class="active">portfolio</a></li>
@@ -108,20 +135,24 @@
 
     <div class="container">
         <div class="sidebar">
+            
             <div class="card">
                 <h2>PORTFOLIO</h2>
                 <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Island, niaumsioioit utrpd.</p>
                 <a class="learn-more">Learn more</a>
             </div>
+
             <div class="card">
                 <h2>BLOG</h2>
                 <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor nommod inncidunt utcidunt ut labore et dolore magna aliqua. Ut ne ros evoiztxpat.</p>
                 <a class="learn-more">Learn more</a>
             </div>
+
             <div class="card">
                 <h2>CV</h2>
                 <p>Lorem ipsum dolor sit amet, consectetur alorner adipiscing elit, sed nontmy my ficst in cididunt et dolond magna aliquannem aliquiam ed content, quis anicnt ut riariameter them dtam.</p>
             </div>
+
         </div>
     </div>
 
@@ -187,71 +218,77 @@
                 
                 var renderP = p;
                 if (isWater) {
-                    let waveOffset = sin(p.y * 50.0 - uniforms.time * 2.2) * 0.005;
+                    let waveOffset = sin(p.y * 50.0 - uniforms.time * 2.5) * 0.006 
+                                   + sin(p.x * 20.0 + uniforms.time * 1.2) * 0.002;
                     renderP.y = horizonY * 2.0 - p.y + waveOffset;
-                    renderP.x = p.x + sin(p.y * 80.0 + uniforms.time * 1.8) * 0.002;
+                    renderP.x = p.x + sin(p.y * 100.0 + uniforms.time * 3.5) * 0.003;
                 }
 
-                // --- 1. LIGHT SKY BLUE + CONFINED SUNRISE TINT ---
-                let skyCleanBlue  = vec3<f32>(0.49, 0.77, 0.94); 
-                let skySoftTint   = vec3<f32>(0.65, 0.83, 0.96); 
-                let peachyOrange  = vec3<f32>(0.98, 0.54, 0.32); 
+                // --- 1. NEW COLOR BALANCING ENGINE (Sky Blue & Saffron) ---
+                let skyBlueTint   = vec3<f32>(0.38, 0.68, 0.88); // Crisp Light Sky Blue Upper Atmosphere
+                let saffronOrange = vec3<f32>(0.96, 0.43, 0.15); // Signature Saffron
+                let skyPinkish    = vec3<f32>(0.84, 0.48, 0.42); // Transition Tone
+                let waterClearBlue= vec3<f32>(0.22, 0.48, 0.76); // Clean Clear Sky Blue Water Surface
 
-                var sky = mix(skySoftTint, skyCleanBlue, smoothstep(-0.4, 0.8, renderP.y));
-                
-                // Confinement equation positioning glow smoothly right behind the fuji profile center
-                let auraCenter = vec2<f32>(0.0, -0.22);
-                let auraRadius = length(renderP - auraCenter);
-                let sunriseGlow = exp(-3.8 * auraRadius);
-                sky = mix(sky, peachyOrange, sunriseGlow * 0.95);
+                // Generate Sky Gradient Block
+                var sky = mix(skyPinkish, skyBlueTint, smoothstep(-0.5, 0.6, renderP.y));
+                // Overlay dense concentrated saffron sunset band tracking directly above horizon line
+                let saffronGlow = exp(-3.8 * abs(renderP.y + 0.32));
+                sky = mix(sky, saffronOrange, saffronGlow * 0.95);
 
-                // Elegant multi-size passing atmospheric clouds
-                let cloudPos = vec2<f32>(renderP.x * 1.3 - uniforms.time * 0.05, renderP.y * 4.5);
-                let clouds = fbm(cloudPos) * fbm(cloudPos * 2.0 + vec2<f32>(2.0, 4.0));
-                sky = mix(sky, vec3<f32>(0.95, 0.97, 0.99), smoothstep(0.18, 0.5, clouds) * 0.45);
+                // Delicate horizontal dynamic cloud wisps
+                let cloudNoise = fbm(vec2<f32>(renderP.x * 1.8 + uniforms.time * 0.015, renderP.y * 7.0));
+                sky = mix(sky, vec3<f32>(0.88, 0.36, 0.22), cloudNoise * 0.28 * smoothstep(-0.5, 0.5, renderP.y));
 
                 var finalScene = sky;
 
-                // --- 2. GRANITE GRAY HARD STONE MOUNT FUJI ---
-                let fujiX = renderP.x + 0.02;
-                let fujiSlope = 0.58 * exp(-1.8 * abs(fujiX)) + 0.05 * exp(-0.2 * abs(fujiX));
+                // --- 2. MOUNT FUJI LAYER CONFIGURATION ---
+                let fujiX = renderP.x + 0.05;
+                let fujiSlope = 0.58 * exp(-2.0 * abs(fujiX)) + 0.06 * exp(-0.3 * abs(fujiX));
+                
                 var fujiHeight = fujiSlope - 0.25;
-                if (fujiHeight > 0.28) { fujiHeight = 0.28; } 
+                let isPlateau = fujiHeight > 0.26;
+                if (isPlateau) { fujiHeight = 0.26; }
 
-                // Structural noise simulating jagged granite rock folds
-                let rockTexture = fbm(renderP * vec2<f32>(32.0, 12.0)) * 0.12 + noise(renderP * 70.0) * 0.02;
-                let graniteGray = vec3<f32>(0.42, 0.44, 0.46) + vec3<f32>(rockTexture); 
-                let snowWhite   = vec3<f32>(0.95, 0.97, 0.99);
+                let fujiBaseColor = vec3<f32>(0.12, 0.26, 0.48);
+                let snowColor     = vec3<f32>(0.94, 0.96, 0.98);
 
                 if (renderP.y < fujiHeight && renderP.y > horizonY) {
-                    finalScene = graniteGray;
+                    finalScene = fujiBaseColor;
                     
-                    // Layered Snowcap
-                    if (renderP.y > fujiHeight - 0.13) {
-                        let erosion = noise(vec2<f32>(fujiX * 38.0, renderP.y * 12.0)) * 0.035;
-                        if (renderP.y + erosion > 0.17 || fujiHeight == 0.28) {
-                            finalScene = snowWhite;
+                    let snowCutoff = 0.12;
+                    if (renderP.y > fujiHeight - snowCutoff) {
+                        let erosionPattern = noise(vec2<f32>(fujiX * 40.0, renderP.y * 10.0)) * 0.03 
+                                           + noise(vec2<f32>(fujiX * 120.0, 1.0)) * 0.01;
+                        if (renderP.y + erosionPattern > 0.14 || isPlateau) {
+                            finalScene = mix(snowColor, saffronOrange, 0.15);
                         }
                     }
                 }
 
-                // --- 3. LAYERED MIDGROUND SLATE RIDGES ---
-                let ridgeNoise = noise(vec2<f32>(renderP.x * 6.0, 3.1)) * 0.04;
-                let midRidgeY = -0.44 + ridgeNoise;
+                // --- 3. MID-GROUND MOUNTAIN SILHOUETTES ---
+                let midRidgeY = -0.38 + noise(vec2<f32>(renderP.x * 4.5, 2.3)) * 0.06 
+                                      + noise(vec2<f32>(renderP.x * 20.0, 0.5)) * 0.008;
                 if (renderP.y < midRidgeY && renderP.y > horizonY) {
-                    finalScene = vec3<f32>(0.32, 0.36, 0.40); 
+                    finalScene = vec3<f32>(0.07, 0.18, 0.34);
                 }
 
-                // --- 4. FOREGROUND LAYER ELEMENTS ---
-                let silhouetteColor = vec3<f32>(0.11, 0.14, 0.18);
+                let lowRidgeY = -0.48 + noise(vec2<f32>(renderP.x * 3.0 + 8.0, 5.1)) * 0.04;
+                if (renderP.y < lowRidgeY && renderP.y > horizonY) {
+                    finalScene = vec3<f32>(0.04, 0.11, 0.24);
+                }
+
+                // --- 4. FOREGROUND STRUCTURES (Torii, Lighthouse & Shores) ---
+                let darkSilhouette = vec3<f32>(0.01, 0.03, 0.08);
                 
                 let toriiPos = renderP - vec2<f32>(-0.45, -0.56);
                 let postL = sdBox(toriiPos - vec2<f32>(-0.07, 0.0), vec2<f32>(0.006, 0.04));
                 let postR = sdBox(toriiPos - vec2<f32>(0.07, 0.0), vec2<f32>(0.006, 0.04));
                 let lintel1 = sdBox(toriiPos - vec2<f32>(0.0, 0.035), vec2<f32>(0.09, 0.005));
                 let lintel2 = sdBox(toriiPos - vec2<f32>(0.0, 0.045), vec2<f32>(0.10, 0.004));
-                if (min(min(min(postL, postR), lintel1), lintel2) < 0.0 && renderP.y > horizonY) {
-                    finalScene = silhouetteColor;
+                let toriiSDF = min(min(min(postL, postR), lintel1), lintel2);
+                if (toriiSDF < 0.0 && renderP.y > horizonY) {
+                    finalScene = darkSilhouette;
                 }
 
                 let lightPos = renderP - vec2<f32>(-0.75, -0.46);
@@ -259,130 +296,65 @@
                 let shaft = sdBox(lightPos - vec2<f32>(0.0, 0.04), vec2<f32>(0.015, 0.05));
                 let gallery = sdBox(lightPos - vec2<f32>(0.0, 0.095), vec2<f32>(0.02, 0.006));
                 let lantern = sdBox(lightPos - vec2<f32>(0.0, 0.12), vec2<f32>(0.012, 0.018));
-                let lighthouseSDF = min(min(min(min(base, shaft), gallery), lantern), length(lightPos - vec2<f32>(0.0, 0.138)) - 0.012);
+                let dome = length(lightPos - vec2<f32>(0.0, 0.138)) - 0.012;
+                let lighthouseSDF = min(min(min(min(base, shaft), gallery), lantern), dome);
                 if (lighthouseSDF < 0.0 && renderP.y > horizonY) {
-                    finalScene = vec3<f32>(0.86, 0.89, 0.92);
+                    finalScene = vec3<f32>(0.85, 0.88, 0.92);
                 }
 
                 let beamPos = lightPos - vec2<f32>(0.0, 0.12);
-                if (beamPos.y > 0.0 && beamPos.y < 0.35 && abs(beamPos.x) < beamPos.y * 1.4 + 0.01) {
-                    finalScene += vec3<f32>(1.0, 0.88, 0.55) * ((1.0 - (beamPos.y / 0.35)) * 0.25);
+                if (beamPos.y > 0.0 && beamPos.y < 0.4 && abs(beamPos.x) < beamPos.y * 1.8 + 0.01) {
+                    let beamGlow = (1.0 - (beamPos.y / 0.4)) * 0.35;
+                    finalScene += vec3<f32>(1.0, 0.85, 0.45) * beamGlow;
                 }
 
-                let shoreY = -0.57 + noise(vec2<f32>(renderP.x * 7.0, 1.5)) * 0.018;
+                let shoreY = -0.57 + noise(vec2<f32>(renderP.x * 8.0, 9.1)) * 0.025;
                 if (renderP.y < shoreY && renderP.y > horizonY) {
-                    finalScene = silhouetteColor;
+                    finalScene = darkSilhouette;
                 }
 
-                // --- 5. REFLECTIVE WATER COUPLING ---
+                // --- 5. COMPOSITION DISPATCH PASS (Water vs Atmosphere Rendering) ---
                 if (isWater) {
-                    let mirrored = mix(skyCleanBlue, finalScene, 0.38);
-                    return vec4<f32>(mirrored * 0.82 + vec3<f32>(0.03, 0.06, 0.12), 1.0);
+                    // Mix mirror scene colors onto the clear sky-blue water baseline layer
+                    let waterBaseColor = mix(waterClearBlue, finalScene, 0.45) * 0.72 + vec3<f32>(0.01, 0.02, 0.05);
+                    
+                    // Brilliant horizontal saffron sunrise reflection highlights tracing water lines
+                    let specularTrack = exp(-6.0 * abs(p.x - 0.15)) * (sin(p.y * 160.0 + uniforms.time * 5.0) * 0.14 + 0.16);
+                    return vec4<f32>(waterBaseColor + saffronOrange * max(specularTrack, 0.0), 1.0);
                 }
 
                 return vec4<f32>(finalScene, 1.0);
             }
         `;
 
-        // --- 🕊️ SOPHISTICATED VECTOR ORIGAMI BOIDS ENGINE ---
-        // Vector configuration modeled directly after advanced low-poly origami folds
-        const origamiSVG = `
-        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <polygon points="50,45 20,25 35,65" fill="#78a0c0" stroke="#0d1f3d" stroke-width="0.8"/>
-            <polygon points="50,45 35,65 52,78" fill="#5880a0" stroke="#0d1f3d" stroke-width="0.8"/>
-            <polygon points="50,45 80,20 68,68" fill="#a0c8f0" stroke="#0d1f3d" stroke-width="0.8"/>
-            <polygon points="50,45 68,68 48,82" fill="#88b0d8" stroke="#0d1f3d" stroke-width="0.8"/>
-            <polygon points="50,45 48,22 42,32" fill="#b8dcff" stroke="#0d1f3d" stroke-width="0.8"/>
-            <polygon points="20,25 12,35 30,50" fill="#4d7394" stroke="#0d1f3d" stroke-width="0.8"/>
-            <polygon points="80,20 88,32 72,46" fill="#bad6f2" stroke="#0d1f3d" stroke-width="0.8"/>
-        </svg>`;
+        // --- 🕊️ Client Javascript Bird Flight Sequencer ---
+        function triggerBirdGroupFlight() {
+            const swarm = document.getElementById('birdSwarm');
+            
+            // Randomly position height cross tracking between upper peaks and cards
+            const minHeight = 12; 
+            const maxHeight = 35;
+            const flightHeight = Math.random() * (maxHeight - minHeight) + minHeight;
+            swarm.style.top = `${flightHeight}vh`;
 
-        const container = document.getElementById('origami-container');
-        const birds = [];
-        const numBirds = 16;
-        const mouse = { x: -2000, y: -2000 };
-
-        class OrigamiBird {
-            constructor() {
-                this.element = document.createElement('div');
-                this.element.className = 'origami-bird';
-                this.element.innerHTML = origamiSVG;
-                container.appendChild(this.element);
-                
-                this.x = Math.random() * window.innerWidth;
-                this.y = Math.random() * (window.innerHeight * 0.45);
-                this.vx = (Math.random() - 0.5) * 1.5 + 1.2; 
-                this.vy = (Math.random() - 0.5) * 0.8;
-                this.targetSpeed = 3.5;
-                this.wingSpeed = 0.3 + Math.random() * 0.3;
-            }
-
-            update() {
-                // Persistent gentle headwind pushing left-to-right
-                this.vx += 0.015;
-
-                // --- Vector Pointer Repulsion Math ---
-                const dx = this.x - mouse.x;
-                const dy = this.y - mouse.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                
-                if (dist < 150) { 
-                    const pushForce = (150 - dist) * 0.22;
-                    this.vx += (dx / dist) * pushForce;
-                    this.vy += (dy / dist) * pushForce;
-                    this.targetSpeed = 10; // Instantly enter flight burst speed boundary
-                } else {
-                    this.targetSpeed = 3.5;
-                }
-
-                // Velocity Clamp
-                const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
-                if (speed > this.targetSpeed) {
-                    this.vx = (this.vx / speed) * this.targetSpeed;
-                    this.vy = (this.vy / speed) * this.targetSpeed;
-                }
-
-                this.x += this.vx;
-                this.y += this.vy;
-
-                // Screen looping constraints
-                if (this.x > window.innerWidth + 60) {
-                    this.x = -60;
-                    this.y = Math.random() * (window.innerHeight * 0.4);
-                    this.vx = Math.random() * 1.5 + 1;
-                }
-                if (this.y < -60) this.y = window.innerHeight * 0.4;
-                if (this.y > window.innerHeight * 0.5) this.vy -= 0.18; // Prevent birds from diving below horizon
-
-                // Dynamic vector transformation math mapping to movement heading
-                const angle = Math.atan2(this.vy, this.vx);
-                this.element.style.transform = `translate3d(${this.x}px, ${this.y}px, 0px) rotate(${angle}rad)`;
-            }
+            // Hard reset animation nodes
+            swarm.style.animation = 'none';
+            swarm.offsetHeight; /* trigger browser repaint layout shift */
+            
+            swarm.style.display = 'block';
+            // Smooth linear crawl crossing the wide horizon line
+            swarm.style.animation = 'flyAcross 18s linear forwards';
         }
 
-        // Initialize Flock Loop
-        for (let i = 0; i < numBirds; i++) {
-            birds.push(new OrigamiBird());
-        }
+        // Loop the script to queue bird groups periodically
+        setInterval(triggerBirdGroupFlight, 28000); // Launches a new flock every 28 seconds
+        setTimeout(triggerBirdGroupFlight, 4000);   // Initial launch sequence 4 seconds after page initializes
 
-        window.addEventListener('mousemove', (e) => {
-            mouse.x = e.clientX; mouse.y = e.clientY;
-        });
-        window.addEventListener('mouseleave', () => {
-            mouse.x = -2000; mouse.y = -2000;
-        });
-
-        function tick() {
-            birds.forEach(bird => bird.update());
-            requestAnimationFrame(tick);
-        }
-        tick();
-
-        // --- Core WebGPU Renderer Bootstrapper ---
+        // --- Core WebGPU Application Initialization Engine ---
         async function init() {
             if (!navigator.gpu) {
                 document.getElementById('gpuCanvas').style.display = 'none';
-                document.body.style.background = 'linear-gradient(to bottom, #7bb0d4, #0c1524)';
+                document.body.style.background = 'linear-gradient(to bottom, #366888, #060913)';
                 return;
             }
 
