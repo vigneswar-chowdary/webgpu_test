@@ -3,77 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive WebGPU CV</title>
+    <title>Creative Developer Hub</title>
     <style>
-        /* Modern Glassmorphic Design */
         :root {
-            --bg-color: #06060e;
+            --bg-color: #05050b;
             --text-color: #f1f1f7;
             --accent-color: #00f0ff;
+            --glass-bg: rgba(12, 12, 25, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.08);
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-color); overflow-x: hidden; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-color); overflow-x: hidden; min-height: 100vh; }
         
-        /* Fixed Background Canvas */
         #gpuCanvas {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 1;
-            pointer-events: none; /* Let clicks pass through to content */
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 1; pointer-events: none;
         }
 
-        /* Scrollable Content Layer */
+        /* Fixed Navigation Header */
+        nav {
+            position: fixed;
+            top: 0; left: 0; width: 100%;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+            background: linear-gradient(to bottom, rgba(5,5,11,0.8), rgba(5,5,11,0));
+            backdrop-filter: blur(4px);
+        }
+        .logo { font-weight: bold; font-size: 1.2rem; cursor: pointer; letter-spacing: 1px; }
+        .nav-links { display: flex; gap: 30px; list-style: none; }
+        .nav-links a { 
+            color: #8a8a9e; text-decoration: none; font-size: 0.95rem; 
+            transition: 0.2s; cursor: pointer;
+        }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent-color); text-shadow: 0 0 10px rgba(0,240,255,0.3); }
+
+        /* Core Content Shell */
         .container {
             position: relative;
             z-index: 2;
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
-            padding: 80px 20px;
+            padding: 120px 20px 60px 20px;
+            min-height: 100vh;
         }
 
-        section {
-            background: rgba(15, 15, 30, 0.6);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+        /* Glassmorphic Pages */
+        .page {
+            display: none; /* Controlled via JS routing */
+            animation: fadeIn 0.4s ease forwards;
+        }
+        .page.active { display: block; }
+
+        section, .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
             border-radius: 16px;
             padding: 40px;
-            margin-bottom: 40px;
-            transition: all 0.3s ease;
+            margin-bottom: 30px;
         }
 
-        /* Hover interaction that triggers script changes */
-        section:hover {
-            border-color: var(--accent-color);
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 240, 255, 0.1);
-        }
-
-        h1 { font-size: 3rem; margin-bottom: 10px; color: #fff; letter-spacing: -1px; }
-        h2 { font-size: 1.8rem; margin-bottom: 20px; color: var(--accent-color); }
-        h3 { font-size: 1.2rem; color: #fff; margin-bottom: 5px; }
+        /* Typography & Layout Helpers */
+        h1 { font-size: 3rem; margin-bottom: 10px; color: #fff; }
+        h2 { font-size: 2rem; margin-bottom: 25px; color: var(--accent-color); }
         p { line-height: 1.6; color: #b0b0c0; margin-bottom: 15px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
         
-        .subtitle { font-size: 1.2rem; color: #8a8a9e; margin-bottom: 30px; }
-        .meta { font-size: 0.9rem; color: #64647a; margin-bottom: 15px; }
-
-        .skills-grid { display: flex; flex-wrap: wrap; gap: 10px; }
-        .skill-tag {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        /* Portfolio/Blog Cards */
+        .interactive-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 25px;
             cursor: pointer;
-            transition: 0.2s;
+            transition: transform 0.2s, border-color 0.2s;
         }
-        .skill-tag:hover {
-            background: var(--accent-color);
-            color: #000;
-            font-weight: bold;
+        .interactive-card:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-4px);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
@@ -81,115 +98,140 @@
 
     <canvas id="gpuCanvas"></canvas>
 
+    <nav>
+        <div class="logo" onclick="route('home')">// AM</div>
+        <ul class="nav-links">
+            <li><a onclick="route('portfolio')" id="link-portfolio">Portfolio</a></li>
+            <li><a onclick="route('blog')" id="link-blog">Blog</a></li>
+            <li><a onclick="route('cv')" id="link-cv">CV</a></li>
+        </ul>
+    </nav>
+
     <div class="container">
-        <!-- Header Section -->
-        <header style="margin-bottom: 60px;">
-            <h1>Alex Mercer</h1>
-            <p class="subtitle">Graphics Engineer & Creative Developer</p>
-        </header>
+        
+        <div id="page-home" class="page active">
+            <section style="text-align: center; padding: 60px 20px;">
+                <h1>Alex Mercer</h1>
+                <p style="font-size: 1.2rem; color: #8a8a9e; margin-bottom: 40px;">Graphics Engineer & Creative Technologist</p>
+                <div class="grid" style="max-width: 700px; margin: 0 auto;">
+                    <div class="interactive-card" onclick="route('portfolio')">
+                        <h3>🎨 Portfolio</h3>
+                        <p style="font-size:0.9rem; margin:10px 0 0 0;">Explore real-time interactive case studies.</p>
+                    </div>
+                    <div class="interactive-card" onclick="route('blog')">
+                        <h3>✍️ Blog</h3>
+                        <p style="font-size:0.9rem; margin:10px 0 0 0;">Deep-dives into WGSL and engine optimization.</p>
+                    </div>
+                    <div class="interactive-card" onclick="route('cv')" style="grid-column: span 2;">
+                        <h3>📄 Curriculum Vitae</h3>
+                        <p style="font-size:0.9rem; margin:10px 0 0 0;">Technical stack, professional history, and credentials.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
 
-        <!-- About Section -->
-        <section id="about" class="interactive-trigger" data-speed="4.0">
-            <h2>About Me</h2>
-            <p>I build high-performance WebGPU architectures and real-time interactive systems. Passionate about bringing native desktop-grade graphics straight to the web browser without asset bloat.</p>
-        </section>
+        <div id="page-portfolio" class="page">
+            <h2>Selected Works</h2>
+            <div class="grid">
+                <div class="interactive-card">
+                    <h3>Nova Engine</h3>
+                    <p>A WebGPU-native micro-renderer built for procedural star cluster generation at 120 FPS.</p>
+                </div>
+                <div class="interactive-card">
+                    <h3>FluidSim WGSL</h3>
+                    <p>Real-time Navier-Stokes fluid simulations executing entirely on compute shaders.</p>
+                </div>
+            </div>
+        </div>
 
-        <!-- Experience Section -->
-        <section id="experience" class="interactive-trigger" data-speed="1.5">
-            <h2>Experience</h2>
-            <div style="margin-bottom: 25px;">
+        <div id="page-blog" class="page">
+            <h2>Writing</h2>
+            <div class="card">
+                <small style="color: var(--accent-color);">May 2026</small>
+                <h3 style="margin: 5px 0 10px 0;">Bypassing Vertex Buffers via Procedural Triangles</h3>
+                <p>How to render viewports efficiently in WebGPU using built-in vertex indices to skip CPU-to-GPU data pipelines entirely...</p>
+            </div>
+            <div class="card">
+                <small style="color: var(--accent-color);">March 2026</small>
+                <h3 style="margin: 5px 0 10px 0;">Understanding WGSL Uniform Alignment Structs</h3>
+                <p>A breakdown of the strict 16-byte layout requirements when building shared memory buffers for WebGPU pipelines.</p>
+            </div>
+        </div>
+
+        <div id="page-cv" class="page">
+            <h2>Curriculum Vitae</h2>
+            <section>
                 <h3>Lead Engine Developer — Matrix Studios</h3>
-                <p class="meta">2024 - Present</p>
-                <p>Optimized core browser engine modules, transitioning critical rendering pipelines from WebGL2 to WebGPU, reducing draw call bottlenecks by 40%.</p>
-            </div>
-            <div>
-                <h3>Frontend Engineer — PixelCraft</h3>
-                <p class="meta">2022 - 2024</p>
-                <p>Designed lightweight, interactive promotional applications using modular procedural fragment shaders.</p>
-            </div>
-        </section>
+                <p style="color: #64647a; font-size: 0.9rem;">2024 - Present</p>
+                <p>Overhauled core WebGL architectures into cutting edge WebGPU clusters, cutting compute times down drastically.</p>
+            </section>
+            <section>
+                <h3>Core Stack</h3>
+                <p>WebGPU, WGSL, Rust, WebAssembly, JavaScript (ES6+), GLSL.</p>
+            </section>
+        </div>
 
-        <!-- Skills Section -->
-        <section id="skills" class="interactive-trigger" data-speed="7.0">
-            <h2>Technical Weaponry</h2>
-            <div class="skills-grid">
-                <span class="skill-tag">WebGPU / WGSL</span>
-                <span class="skill-tag">JavaScript / TypeScript</span>
-                <span class="skill-tag">Rust (Wasm)</span>
-                <span class="skill-tag">Compute Shaders</span>
-                <span class="skill-tag">GLSL / HLSL</span>
-            </div>
-        </section>
     </div>
 
-    <!-- WebGPU Core Logic -->
     <script type="module">
+        // Minimal matrix mesh grid shader for responsive visual background
         const shaderSource = `
-            struct Uniforms {
-                time: f32,
-                speedMultiplier: f32,
-                resolution: vec2<f32>
-            }
+            struct Uniforms { time: f32, speed: f32, res: vec2<f32> }
             @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
-            struct VertexOutput {
-                @builtin(position) position: vec4<f32>,
-                @location(0) uv: vec2<f32>
-            }
+            struct VO { @builtin(position) pos: vec4<f32>, @location(0) uv: vec2<f32> }
 
             @vertex
-            fn vs_main(@builtin(vertex_index) vertexIndex: u32) -> VertexOutput {
-                var pos = array<vec2<f32>, 3>(
-                    vec2<f32>(-1.0, -1.0), vec2<f32>(3.0, -1.0), vec2<f32>(-1.0, 3.0)
-                );
-                var out: VertexOutput;
-                out.position = vec4<f32>(pos[vertexIndex], 0.0, 1.0);
-                out.uv = pos[vertexIndex] * 0.5 + 0.5;
+            fn vs_main(@builtin(vertex_index) idx: u32) -> VO {
+                var pos = array<vec2<f32>, 3>(vec2<f32>(-1.,-1.), vec2<f32>(3.,-1.), vec2<f32>(-1.,3.));
+                var out: VO;
+                out.pos = vec4<f32>(pos[idx], 0.0, 1.0);
+                out.uv = pos[idx] * 0.5 + 0.5;
                 return out;
             }
 
-            // Pseudo-random generator for particle effect
-            fn hash(p: vec2<f32>) -> f32 {
-                return fraction(sin(dot(p, vec2<f32>(127.1, 311.7))) * 43758.5453123);
-            }
-
-            fn fraction(v: f32) -> f32 {
-                return v - floor(v);
-            }
-
             @fragment
-            fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-                let uv = in.uv * vec2<f32>(uniforms.resolution.x / uniforms.resolution.y, 1.0);
+            fn fs_main(in: VO) -> @location(0) vec4<f32> {
+                let uv = (in.uv * 2.0 - 1.0) * vec2<f32>(uniforms.res.x / uniforms.res.y, 1.0);
+                let pulse = sin(uniforms.time * uniforms.speed) * 0.5 + 0.5;
                 
-                var color = vec3<f32>(0.0);
-                let scale: f32 = 12.0;
-                let gridUV = floor(uv * scale);
-                let localUV = fraction(uv * scale) - 0.5;
+                // Generates an elegant ambient digital matrix backdrop
+                let scale = 25.0;
+                let g = sin(uv.x * scale) * sin(uv.y * scale + uniforms.time);
+                let edge = smoothstep(0.95, 0.99, abs(g));
                 
-                // Generates dynamic interactive network nodes
-                let n = hash(gridUV);
-                if (n > 0.65) {
-                    let speed = uniforms.time * (n * 0.5 + 0.2) * uniforms.speedMultiplier;
-                    let offset = vec2<f32>(sin(speed + n * 6.28), cos(speed + n * 6.28)) * 0.3;
-                    let dist = length(localUV - offset);
-                    
-                    // Dynamic glow calculation
-                    let pSize = 0.015 + (sin(uniforms.time * 2.0 + n * 10.0) * 0.005);
-                    var brightness = pSize / dist;
-                    brightness = clamp(brightness, 0.0, 1.0) * (1.0 - dist * 2.0);
-                    
-                    // Dynamic color swapping based on interaction speed
-                    var pColor = mix(vec3<f32>(0.2, 0.1, 0.4), vec3<f32>(0.0, 0.94, 1.0), uniforms.speedMultiplier * 0.2);
-                    color += pColor * brightness;
-                }
-
-                return vec4<f32>(color, 1.0);
+                let col = mix(vec3<f32>(0.02, 0.01, 0.06), vec3<f32>(0.0, 0.6, 0.7), edge * (0.3 + pulse * 0.2));
+                return vec4<f32>(col, 1.0);
             }
         `;
 
-        async function init() {
-            if (!navigator.gpu) return;
+        // --- Router Engine Logic ---
+        let currentSpeed = 1.0;
+        let targetSpeed = 1.0;
+
+        window.route = function(pageId) {
+            // Update Active Classes across DOM Elements
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
             
+            const targetPage = document.getElementById(`page-${pageId}`);
+            if(targetPage) targetPage.classList.add('active');
+            
+            const targetLink = document.getElementById(`link-${pageId}`);
+            if(targetLink) targetLink.classList.add('active');
+
+            // Shift GPU animation behavior based on active page route!
+            if(pageId === 'portfolio') targetSpeed = 5.0; // Fast energetic pulses
+            else if(pageId === 'blog') targetSpeed = 0.3; // Calmer reading speed
+            else if(pageId === 'cv') targetSpeed = 2.0;
+            else targetSpeed = 1.0; // Home defaults
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // --- Core WebGPU Setup ---
+        async function start() {
+            if (!navigator.gpu) return;
             const adapter = await navigator.gpu.requestAdapter();
             const device = await adapter.requestDevice();
             const canvas = document.getElementById("gpuCanvas");
@@ -197,79 +239,54 @@
             const format = navigator.gpu.getPreferredCanvasFormat();
             
             const dpr = window.devicePixelRatio || 1;
-            canvas.width = window.innerWidth * dpr;
-            canvas.height = window.innerHeight * dpr;
+            canvas.width = window.innerWidth * dpr; canvas.height = window.innerHeight * dpr;
             context.configure({ device, format, alphaMode: "opaque" });
 
-            const shaderModule = device.createShaderModule({ code: shaderSource });
+            const module = device.createShaderModule({ code: shaderSource });
             const pipeline = device.createRenderPipeline({
                 layout: "auto",
-                vertex: { module: shaderModule, entryPoint: "vs_main" },
-                fragment: { module: shaderModule, entryPoint: "fs_main", targets: [{ format }] }
+                vertex: { module, entryPoint: "vs_main" },
+                fragment: { module, entryPoint: "fs_main", targets: [{ format }] }
             });
 
-            // Uniform buffer structure: time(f32), speedMultiplier(f32), resolution(vec2<f32>)
-            const uniformBuffer = device.createBuffer({
-                size: 16,
-                usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
-            });
-
-            const bindGroup = device.createBindGroup({
+            const buf = device.createBuffer({ size: 16, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+            const bg = device.createBindGroup({
                 layout: pipeline.getBindGroupLayout(0),
-                entries: [{ binding: 0, resource: { buffer: uniformBuffer } }]
+                entries: [{ binding: 0, resource: { buffer: buf } }]
             });
 
-            const uniformData = new Float32Array(4);
-            let targetSpeed = 1.0;
-            let currentSpeed = 1.0;
-
-            // Interactive Event Listeners mapping DOM to WebGPU pipeline variables
-            document.querySelectorAll('.interactive-trigger').forEach(element => {
-                element.addEventListener('mouseenter', () => {
-                    targetSpeed = parseFloat(element.getAttribute('data-speed')) || 2.0;
-                });
-                element.addEventListener('mouseleave', () => {
-                    targetSpeed = 1.0;
-                });
-            });
-
-            function frame(time) {
-                // Smooth interpolation for the speed change transition
-                currentSpeed += (targetSpeed - currentSpeed) * 0.08;
-
-                uniformData[0] = time * 0.001; 
-                uniformData[1] = currentSpeed; 
-                uniformData[2] = canvas.width;
-                uniformData[3] = canvas.height;
+            const data = new Float32Array(4);
+            function render(time) {
+                currentSpeed += (targetSpeed - currentSpeed) * 0.05; // Smoothly ramp speed on route shifts
                 
-                device.queue.writeBuffer(uniformBuffer, 0, uniformData);
+                data[0] = time * 0.001;
+                data[1] = currentSpeed;
+                data[2] = canvas.width;
+                data[3] = canvas.height;
+                device.queue.writeBuffer(buf, 0, data);
 
-                const commandEncoder = device.createCommandEncoder();
-                const renderPass = commandEncoder.beginRenderPass({
+                const enc = device.createCommandEncoder();
+                const pass = enc.beginRenderPass({
                     colorAttachments: [{
                         view: context.getCurrentTexture().createView(),
-                        clearValue: { r: 0.02, g: 0.02, b: 0.05, a: 1.0 },
-                        loadOp: "clear", storeOp: "store"
+                        loadOp: "clear", storeOp: "store",
+                        clearValue: { r: 0.02, g: 0.02, b: 0.04, a: 1.0 }
                     }]
                 });
-
-                renderPass.setPipeline(pipeline);
-                renderPass.setBindGroup(0, bindGroup);
-                renderPass.draw(3);
-                renderPass.end();
-
-                device.queue.submit([commandEncoder.finish()]);
-                requestAnimationFrame(frame);
+                pass.setPipeline(pipeline);
+                pass.setBindGroup(0, bg);
+                pass.draw(3);
+                pass.end();
+                device.queue.submit([enc.finish()]);
+                requestAnimationFrame(render);
             }
-            requestAnimationFrame(frame);
+            requestAnimationFrame(render);
 
             window.addEventListener("resize", () => {
-                canvas.width = window.innerWidth * dpr;
-                canvas.height = window.innerHeight * dpr;
+                canvas.width = window.innerWidth * dpr; canvas.height = window.innerHeight * dpr;
             });
         }
-
-        init();
+        start();
     </script>
 </body>
 </html>
