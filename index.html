@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Creative Developer Hub</title>
+    <title>Alex Mercer | Creative Developer</title>
     <style>
         :root {
-            --bg-color: #05050b;
-            --text-color: #f1f1f7;
-            --accent-color: #00f0ff;
-            --glass-bg: rgba(12, 12, 25, 0.65);
-            --glass-border: rgba(255, 255, 255, 0.08);
+            --bg-color: #040808;
+            --text-color: #e6f2f2;
+            --accent-color: #00ffaa; /* Emerald garden neon */
+            --glass-bg: rgba(6, 15, 15, 0.7);
+            --glass-border: rgba(0, 255, 170, 0.1);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
         body { background-color: var(--bg-color); color: var(--text-color); overflow-x: hidden; min-height: 100vh; }
@@ -21,75 +21,71 @@
             z-index: 1; pointer-events: none;
         }
 
-        /* Fixed Navigation Header */
+        /* Navigation */
         nav {
             position: fixed;
             top: 0; left: 0; width: 100%;
-            padding: 20px 40px;
+            padding: 25px 40px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             z-index: 10;
-            background: linear-gradient(to bottom, rgba(5,5,11,0.8), rgba(5,5,11,0));
+            background: linear-gradient(to bottom, rgba(4,8,8,0.9), rgba(4,8,8,0));
             backdrop-filter: blur(4px);
         }
-        .logo { font-weight: bold; font-size: 1.2rem; cursor: pointer; letter-spacing: 1px; }
-        .nav-links { display: flex; gap: 30px; list-style: none; }
+        .logo { font-weight: 800; font-size: 1.1rem; cursor: pointer; letter-spacing: 2px; color: #fff; }
+        .nav-links { display: flex; gap: 35px; list-style: none; }
         .nav-links a { 
-            color: #8a8a9e; text-decoration: none; font-size: 0.95rem; 
-            transition: 0.2s; cursor: pointer;
+            color: #8fa3a3; text-decoration: none; font-size: 0.9rem; font-weight: 500;
+            transition: 0.3s; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
         }
-        .nav-links a:hover, .nav-links a.active { color: var(--accent-color); text-shadow: 0 0 10px rgba(0,240,255,0.3); }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent-color); text-shadow: 0 0 15px rgba(0,255,170,0.4); }
 
-        /* Core Content Shell */
+        /* Content Framework */
         .container {
             position: relative;
             z-index: 2;
-            max-width: 900px;
+            max-width: 850px;
             margin: 0 auto;
-            padding: 120px 20px 60px 20px;
-            min-height: 100vh;
+            padding: 140px 20px 80px 20px;
         }
 
-        /* Glassmorphic Pages */
-        .page {
-            display: none; /* Controlled via JS routing */
-            animation: fadeIn 0.4s ease forwards;
-        }
+        .page { display: none; animation: pageIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .page.active { display: block; }
 
         section, .card {
             background: var(--glass-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border);
-            border-radius: 16px;
+            border-radius: 20px;
             padding: 40px;
             margin-bottom: 30px;
         }
 
-        /* Typography & Layout Helpers */
-        h1 { font-size: 3rem; margin-bottom: 10px; color: #fff; }
-        h2 { font-size: 2rem; margin-bottom: 25px; color: var(--accent-color); }
-        p { line-height: 1.6; color: #b0b0c0; margin-bottom: 15px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        h1 { font-size: 3.5rem; margin-bottom: 10px; color: #fff; font-weight: 800; letter-spacing: -1px; }
+        h2 { font-size: 2rem; margin-bottom: 25px; color: var(--accent-color); font-weight: 700; }
+        p { line-height: 1.7; color: #adbebe; margin-bottom: 20px; font-size: 1.05rem; }
         
-        /* Portfolio/Blog Cards */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        
         .interactive-card {
-            background: rgba(255,255,255,0.02);
+            background: rgba(255,255,255,0.01);
             border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            padding: 25px;
+            border-radius: 14px;
+            padding: 30px;
             cursor: pointer;
-            transition: transform 0.2s, border-color 0.2s;
+            transition: all 0.3s ease;
         }
         .interactive-card:hover {
             border-color: var(--accent-color);
-            transform: translateY(-4px);
+            background: rgba(0, 255, 170, 0.03);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 255, 170, 0.05);
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+        @keyframes pageIn {
+            from { opacity: 0; transform: translateY(15px); }
             to { opacity: 1; transform: translateY(0); }
         }
     </style>
@@ -99,7 +95,7 @@
     <canvas id="gpuCanvas"></canvas>
 
     <nav>
-        <div class="logo" onclick="route('home')">// AM</div>
+        <div class="logo" onclick="route('home')">BABYLON//OS</div>
         <ul class="nav-links">
             <li><a onclick="route('portfolio')" id="link-portfolio">Portfolio</a></li>
             <li><a onclick="route('blog')" id="link-blog">Blog</a></li>
@@ -110,107 +106,131 @@
     <div class="container">
         
         <div id="page-home" class="page active">
-            <section style="text-align: center; padding: 60px 20px;">
+            <section style="background: none; border: none; padding: 40px 0;">
                 <h1>Alex Mercer</h1>
-                <p style="font-size: 1.2rem; color: #8a8a9e; margin-bottom: 40px;">Graphics Engineer & Creative Technologist</p>
-                <div class="grid" style="max-width: 700px; margin: 0 auto;">
+                <p style="font-size: 1.3rem; color: #8fa3a3; margin-bottom: 50px;">Architecting high-performance interactive graphics for the modern web.</p>
+                <div class="grid">
                     <div class="interactive-card" onclick="route('portfolio')">
-                        <h3>🎨 Portfolio</h3>
-                        <p style="font-size:0.9rem; margin:10px 0 0 0;">Explore real-time interactive case studies.</p>
+                        <h3>🌿 Portfolio</h3>
+                        <p style="font-size:0.95rem; margin-top:10px;">Step into the digital terraces of real-time interactive engineering.</p>
                     </div>
                     <div class="interactive-card" onclick="route('blog')">
-                        <h3>✍️ Blog</h3>
-                        <p style="font-size:0.9rem; margin:10px 0 0 0;">Deep-dives into WGSL and engine optimization.</p>
-                    </div>
-                    <div class="interactive-card" onclick="route('cv')" style="grid-column: span 2;">
-                        <h3>📄 Curriculum Vitae</h3>
-                        <p style="font-size:0.9rem; margin:10px 0 0 0;">Technical stack, professional history, and credentials.</p>
+                        <h3>✍️ Garden Log</h3>
+                        <p style="font-size:0.95rem; margin-top:10px;">Technical breakdowns regarding WebGPU optimization and WGSL.</p>
                     </div>
                 </div>
             </section>
         </div>
 
         <div id="page-portfolio" class="page">
-            <h2>Selected Works</h2>
+            <h2>Selected Exhibits</h2>
             <div class="grid">
                 <div class="interactive-card">
-                    <h3>Nova Engine</h3>
-                    <p>A WebGPU-native micro-renderer built for procedural star cluster generation at 120 FPS.</p>
+                    <h3>Elysium Shader Pipeline</h3>
+                    <p>A WebGPU particle structure mapping mathematical botanic growth patterns at 144 FPS natively.</p>
                 </div>
                 <div class="interactive-card">
-                    <h3>FluidSim WGSL</h3>
-                    <p>Real-time Navier-Stokes fluid simulations executing entirely on compute shaders.</p>
+                    <h3>Cascading Fluid Sim</h3>
+                    <p>Real-time vertical velocity fluid simulations imitating waterfalls using high-speed compute buffers.</p>
                 </div>
             </div>
         </div>
 
         <div id="page-blog" class="page">
-            <h2>Writing</h2>
+            <h2>The Engineering Log</h2>
             <div class="card">
-                <small style="color: var(--accent-color);">May 2026</small>
-                <h3 style="margin: 5px 0 10px 0;">Bypassing Vertex Buffers via Procedural Triangles</h3>
-                <p>How to render viewports efficiently in WebGPU using built-in vertex indices to skip CPU-to-GPU data pipelines entirely...</p>
-            </div>
-            <div class="card">
-                <small style="color: var(--accent-color);">March 2026</small>
-                <h3 style="margin: 5px 0 10px 0;">Understanding WGSL Uniform Alignment Structs</h3>
-                <p>A breakdown of the strict 16-byte layout requirements when building shared memory buffers for WebGPU pipelines.</p>
+                <small style="color: var(--accent-color); font-weight: bold;">May 2026</small>
+                <h3 style="margin: 8px 0 12px 0;">Procedural Vegetation Generation via Noise Structs</h3>
+                <p>An evaluation of generating leafy textures and terraced visual elements entirely inside WGSL fragment shaders, completely bypassing standard heavy OBJ mesh tracking pipelines...</p>
             </div>
         </div>
 
         <div id="page-cv" class="page">
             <h2>Curriculum Vitae</h2>
             <section>
-                <h3>Lead Engine Developer — Matrix Studios</h3>
-                <p style="color: #64647a; font-size: 0.9rem;">2024 - Present</p>
-                <p>Overhauled core WebGL architectures into cutting edge WebGPU clusters, cutting compute times down drastically.</p>
+                <h3>Senior Systems Developer — Alexandria Labs</h3>
+                <p style="color: #647a7a; font-size: 0.9rem; margin-bottom: 15px;">2024 - PRESENT</p>
+                <p>Pioneered web-native graphic layout replacements, migrating legacy structural displays over to hardware-accelerated WebGPU architectures.</p>
             </section>
             <section>
-                <h3>Core Stack</h3>
-                <p>WebGPU, WGSL, Rust, WebAssembly, JavaScript (ES6+), GLSL.</p>
+                <h3>Technical Frameworks</h3>
+                <p>WebGPU, WGSL, Native Compute Shaders, WebAssembly, Rust, Vanilla ES6 JavaScript.</p>
             </section>
         </div>
 
     </div>
 
     <script type="module">
-        // Minimal matrix mesh grid shader for responsive visual background
         const shaderSource = `
-            struct Uniforms { time: f32, speed: f32, res: vec2<f32> }
+            struct Uniforms {
+                time: f32,
+                scrollOffset: f32,
+                res: vec2<f32>
+            }
             @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
-            struct VO { @builtin(position) pos: vec4<f32>, @location(0) uv: vec2<f32> }
+            struct VertexOutput {
+                @builtin(position) pos: vec4<f32>,
+                @location(0) uv: vec2<f32>
+            }
 
             @vertex
-            fn vs_main(@builtin(vertex_index) idx: u32) -> VO {
+            fn vs_main(@builtin(vertex_index) idx: u32) -> VertexOutput {
                 var pos = array<vec2<f32>, 3>(vec2<f32>(-1.,-1.), vec2<f32>(3.,-1.), vec2<f32>(-1.,3.));
-                var out: VO;
+                var out: VertexOutput;
                 out.pos = vec4<f32>(pos[idx], 0.0, 1.0);
                 out.uv = pos[idx] * 0.5 + 0.5;
                 return out;
             }
 
+            // Pseudo-noise to simulate organic growth layers
+            fn hash(p: vec2<f32>) -> f32 {
+                return fract(sin(dot(p, vec2<f32>(127.1, 311.7))) * 43758.5453123);
+            }
+
             @fragment
-            fn fs_main(in: VO) -> @location(0) vec4<f32> {
+            fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
                 let uv = (in.uv * 2.0 - 1.0) * vec2<f32>(uniforms.res.x / uniforms.res.y, 1.0);
-                let pulse = sin(uniforms.time * uniforms.speed) * 0.5 + 0.5;
                 
-                // Generates an elegant ambient digital matrix backdrop
-                let scale = 25.0;
-                let g = sin(uv.x * scale) * sin(uv.y * scale + uniforms.time);
-                let edge = smoothstep(0.95, 0.99, abs(g));
+                // 1. Terraced Structures (Horizontal architectural tiers)
+                let yTier = floor((uv.y - uniforms.scrollOffset * 0.2) * 4.0);
+                let tierNoise = hash(vec2<f32>(yTier, 12.3));
                 
-                let col = mix(vec3<f32>(0.02, 0.01, 0.06), vec3<f32>(0.0, 0.6, 0.7), edge * (0.3 + pulse * 0.2));
-                return vec4<f32>(col, 1.0);
+                // 2. Hanging Vines & Waterfalls (Vertical cascading movements)
+                var cascade = sin(uv.x * (20.0 + tierNoise * 10.0) + uniforms.time * (1.0 + tierNoise));
+                cascade += cos(uv.y * 10.0 - uniforms.time * 2.0);
+                
+                // Isolate cascades to make them look like hanging structures
+                let lines = smoothstep(0.88, 0.96, sin(uv.x * 8.0 + yTier) * md_mod(cascade, 1.5));
+                
+                // 3. Dynamic Color Matrix (Deep mossy emerald greens mixing with flowing cyan streams)
+                let mossGreen = vec3<f32>(0.0, 0.2, 0.1);
+                let neonEmerald = vec3<f32>(0.0, 1.0, 0.6);
+                let waterCyan = vec3<f32>(0.0, 0.6, 0.7);
+                
+                var finalColor = mix(vec3<f32>(0.01, 0.02, 0.02), mossGreen, (uv.y + 1.0) * 0.3);
+                
+                // Layer the interactive glowing garden vines
+                let vineGlow = lines * (sin(uniforms.time + tierNoise * 6.28) * 0.3 + 0.7);
+                finalColor = mix(finalColor, mix(neonEmerald, waterCyan, tierNoise), vineGlow);
+
+                // Add a subtle vignette depth shadow
+                let vignette = smoothstep(2.0, 0.5, length(uv));
+                finalColor *= vignette;
+
+                return vec4<f32>(finalColor, 1.0);
+            }
+
+            fn md_mod(x: f32, y: f32) -> f32 {
+                return x - y * floor(x / y);
             }
         `;
 
-        // --- Router Engine Logic ---
-        let currentSpeed = 1.0;
-        let targetSpeed = 1.0;
+        // --- Client Navigation Routing State Engine ---
+        let targetScrollOffset = 0.0;
+        let currentScrollOffset = 0.0;
 
         window.route = function(pageId) {
-            // Update Active Classes across DOM Elements
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
             
@@ -220,18 +240,23 @@
             const targetLink = document.getElementById(`link-${pageId}`);
             if(targetLink) targetLink.classList.add('active');
 
-            // Shift GPU animation behavior based on active page route!
-            if(pageId === 'portfolio') targetSpeed = 5.0; // Fast energetic pulses
-            else if(pageId === 'blog') targetSpeed = 0.3; // Calmer reading speed
-            else if(pageId === 'cv') targetSpeed = 2.0;
-            else targetSpeed = 1.0; // Home defaults
+            // Move the garden background "up or down" depending on the page selected!
+            if (pageId === 'portfolio') targetScrollOffset = -2.0;
+            else if (pageId === 'blog') targetScrollOffset = 2.0;
+            else if (pageId === 'cv') targetScrollOffset = 4.0;
+            else targetScrollOffset = 0.0;
             
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // --- Core WebGPU Setup ---
-        async function start() {
-            if (!navigator.gpu) return;
+        // --- WebGPU System Activation ---
+        async function run() {
+            if (!navigator.gpu) {
+                document.getElementById('gpuCanvas').style.display = 'none';
+                document.body.style.background = 'linear-gradient(to bottom, #040808, #0b1a1a)';
+                return;
+            }
+            
             const adapter = await navigator.gpu.requestAdapter();
             const device = await adapter.requestDevice();
             const canvas = document.getElementById("gpuCanvas");
@@ -256,13 +281,16 @@
             });
 
             const data = new Float32Array(4);
-            function render(time) {
-                currentSpeed += (targetSpeed - currentSpeed) * 0.05; // Smoothly ramp speed on route shifts
-                
-                data[0] = time * 0.001;
-                data[1] = currentSpeed;
+
+            function draw(time) {
+                // Smoothly ease the background shifting transition
+                currentScrollOffset += (targetScrollOffset - currentScrollOffset) * 0.06;
+
+                data[0] = time * 0.0006;         // slowed down speed for majestic mood
+                data[1] = currentScrollOffset;  // shifted layout parameter
                 data[2] = canvas.width;
                 data[3] = canvas.height;
+                
                 device.queue.writeBuffer(buf, 0, data);
 
                 const enc = device.createCommandEncoder();
@@ -270,7 +298,7 @@
                     colorAttachments: [{
                         view: context.getCurrentTexture().createView(),
                         loadOp: "clear", storeOp: "store",
-                        clearValue: { r: 0.02, g: 0.02, b: 0.04, a: 1.0 }
+                        clearValue: { r: 0.01, g: 0.02, b: 0.02, a: 1.0 }
                     }]
                 });
                 pass.setPipeline(pipeline);
@@ -278,15 +306,15 @@
                 pass.draw(3);
                 pass.end();
                 device.queue.submit([enc.finish()]);
-                requestAnimationFrame(render);
+                requestAnimationFrame(draw);
             }
-            requestAnimationFrame(render);
+            requestAnimationFrame(draw);
 
             window.addEventListener("resize", () => {
                 canvas.width = window.innerWidth * dpr; canvas.height = window.innerHeight * dpr;
             });
         }
-        start();
+        run();
     </script>
 </body>
 </html>
