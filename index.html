@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimal WebGPU Art</title>
+    <style>
+        * { margin: 0; padding: 0; overflow: hidden; background: #05050a; }
+        canvas { display: block; width: 100vw; height: 100vh; }
+    </style>
+</head>
+<body>
+    <canvas id="gpuCanvas"></canvas>
+
+    <script type="module">
+        // 1. WGSL Shaders (Vertex & Fragment)
+        const shaderSource = `
+            struct Uniforms {
+                time: f32,
+                resolution: vec2<f32>,
+            }
+            @group(0) @binding(0) var<uniform> uniforms: Uniforms;
+
+            struct VertexOutput {
+                @builtin(position) position: vec4<f32>,
+                @location(0) uv: vec2<f32>,
+            }
+
+            @vertex
+            fn vs_main(@builtin(vertex_index) vertexIndex: u32) -> VertexOutput {
+                // Generates a full-screen triangle procedurally without vertex buffers
+                var pos = array<vec2<f32>, 3>(
+                    vec2<f32>(-1.0, -1.0),
+                    vec2<f32>( 3.0, -1.0),
+                    vec2<f32>(-1.0,  3.0)
+                );
+                var out: VertexOutput;
+                out.position = vec4<f32>(pos[vertexIndex], 0.0, 1.0);
+                out.uv = pos[vertexIndex] * 0.5 + 0.5;
+                return out;
+            }
+
+            @fragment
+            fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+                let uv = (in.uv * 2.0 - 1.0) * vec2<f32>(uniforms.resolution.x / uniforms.resolution.y, 1.0);
+                
+                // Beautiful Sci-Fi Synthwave Grid Math
+                let perspective = 1.0 / (uv.y + 1.2); 
+                let gridUV = vec2<f32>(uv.x * perspective * 2.0, perspective * 5.0 - uniforms.time * 1.5);
+                
+                let lines = sin(gridUV * 15.0);
+                let gridLines = smoothstep(0.92, 0.98, max(lines.x, lines.y));
+                
+                // Color Gradients
+                let neonPurple = vec3<f32>(0.5, 0.0, 1.0);
+                let neonCyan = vec3<f32>(0.0, 0.9, 1.0);
+                var finalColor = mix(neonPurple, neonCyan, uv.y + 0.5) * (gridLines * (uv.y + 0.8));
+                
+                // Horizon Glow
+                finalColor += neonPurple * (0.15 / abs(uv.y + 0.1));
+
+                return vec4<f32>(finalColor, 1.0);
+            }
+        `;
+
+        async function init() {
+            // 2. Initialize WebGPU
+            if (!navigator.gpu) {
+                document.body.innerHTML = "<h1 style='color:white; padding:20px;'>WebGPU is not supported on this browser.</h1>";
+                return;
+            }
+            const adapter = await navigator.gpu.requestAdapter();
+            const device = await adapter.requestDevice();
+
+            const canvas = document.getElementById("gpuCanvas");
+            const context = canvas.getContext("webgpu");
+            const format = navigator.gpu.getPreferredCanvasFormat();
+            
+            const devicePixelRatio = window.devicePixelRatio || 1;
+            canvas.width = window.innerWidth * devicePixelRatio;
+            canvas.height = window.innerHeight * devicePixelRatio;
+            
+            context.configure({ device, format, alphaMode: "opaque" });
+
+            // 3. Create Pipeline
+            const shaderModule = device.createShaderModule({ code: shaderSource });
+            const pipeline = device.createRenderPipeline({
+                layout: "auto",
+                vertex: { module: shaderModule, entryPoint: "vs_main" },
+                fragment: { module: shaderModule, entryPoint: "fs_main", targets: [{ format }] },
+                primitive: { topology: "triangle-list" }
+            });
+
+            // 4. Create Uniform Buffer (Time & Resolution data)
+            const uniformBufferSize = 16; // 4 bytes * 4 elements (time, alignment, resX, resY)
+            const uniformBuffer = device.createBuffer({
+                size: uniformBufferSize,
+                usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+            });
+
+            const bindGroup = device.createBindGroup({
+                layout: pipeline.getBindGroupLayout(0),
+                entries: [{ binding: 0, resource: { buffer: uniformBuffer } }]
+            });
+
+            // 5. Render Loop
+            const uniformData = new Float32Array(4);
+            function frame(time) {
+                uniformData[0] = time * 0.001; // Time in seconds
+                uniformData[2] = canvas.width;
+                uniformData[3] = canvas.height;
+                device.queue.writeBuffer(uniformBuffer, 0, uniformData);
+
+                const commandEncoder = device.createCommandEncoder();
+                const textureView = context.getCurrentTexture().createView();
+                
+                const renderPass = commandEncoder.beginRenderPass({
+                    colorAttachments: [{
+                        view: textureView,
+                        clearValue: { r: 0.02, g: 0.02, b: 0.04, a: 1.0 },
+                        loadOp: "clear",
+                        storeOp: "store"
+                    }]
+                });
+
+                renderPass.setPipeline(pipeline);
+                renderPass.setBindGroup(0, bindGroup);
+                renderPass.draw(3); // Draws our procedural full-screen triangle
+                renderPass.end();
+
+                device.queue.submit([commandEncoder.finish()]);
+                requestAnimationFrame(frame);
+            }
+            requestAnimationFrame(frame);
+
+            // Handle Resize
+            window.addEventListener("resize", () => {
+                canvas.width = window.innerWidth * devicePixelRatio;
+                canvas.height = window.innerHeight * devicePixelRatio;
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
