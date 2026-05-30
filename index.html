@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fuji Sunrise Dashboard</title>
+    <title>Fuji Sunset Dashboard</title>
     <style>
         :root {
             --bg-color: #060913;
@@ -44,7 +44,6 @@
             position: relative;
             z-index: 2;
             max-width: 1400px;
-            margin: 0 o;
             margin-left: auto;
             padding: 140px 50px 80px 0;
             display: flex;
@@ -69,11 +68,6 @@
         h2 { font-size: 1.1rem; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: #fff; font-weight: 700; }
         p { line-height: 1.5; color: #9ca3af; font-size: 0.85rem; }
         .learn-more { color: #d1d5db; font-size: 0.8rem; text-decoration: none; display: block; margin-top: 12px; font-weight: 600; cursor: pointer;}
-
-        @keyframes pageIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
     </style>
 </head>
 <body>
@@ -81,30 +75,30 @@
     <canvas id="gpuCanvas"></canvas>
 
     <nav class="sidebar">
-        <div class="logo" onclick="route('home')">BABYLON//OS</div>
+        <div class="logo">BABYLON//OS</div>
         <ul class="nav-links">
-            <li><a onclick="route('portfolio')" id="link-portfolio">portfolio</a></li>
-            <li><a onclick="route('blog')" id="link-blog">blog</a></li>
-            <li><a onclick="route('cv')" id="link-cv">cv</a></li>
+            <li><a class="active">portfolio</a></li>
+            <li><a>blog</a></li>
+            <li><a>cv</a></li>
         </ul>
     </nav>
 
     <div class="container">
         <div class="sidebar">
             
-            <div id="card-portfolio" class="card">
+            <div class="card">
                 <h2>PORTFOLIO</h2>
                 <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Island, niaumsioioit utrpd.</p>
                 <a class="learn-more">Learn more</a>
             </div>
 
-            <div id="card-blog" class="card">
+            <div class="card">
                 <h2>BLOG</h2>
                 <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor nommod inncidunt utcidunt ut labore et dolore magna aliqua. Ut ne ros evoiztxpat.</p>
                 <a class="learn-more">Learn more</a>
             </div>
 
-            <div id="card-cv" class="card">
+            <div class="card">
                 <h2>CV</h2>
                 <p>Lorem ipsum dolor sit amet, consectetur alorner adipiscing elit, sed nontmy my ficst in cididunt et dolond magna aliquannem aliquiam ed content, quis anicnt ut riariameter them dtam.</p>
             </div>
@@ -135,9 +129,8 @@
                 return out;
             }
 
-            // --- Noise Generators for Ridges & Textures ---
             fn hash(p: vec2<f32>) -> f32 {
-                var p3 = fract(vec3<f32>(p.xyx) * array<f32>(.1031, .1030, .0973));
+                var p3 = fract(vec3<f32>(p.xyx) * vec3<f32>(0.1031, 0.1030, 0.0973));
                 p3 += dot(p3, p3.yzx + 33.33);
                 return fract((p3.x + p3.y) * p3.z);
             }
@@ -159,7 +152,6 @@
                 return value;
             }
 
-            // SDF Operators
             fn sdBox(p: vec2<f32>, b: vec2<f32>) -> f32 {
                 let d = abs(p) - b;
                 return length(max(d, vec2<f32>(0.0))) + min(max(d.x, d.y), 0.0);
@@ -171,20 +163,18 @@
                 let aspect = uniforms.res.x / uniforms.res.y;
                 let p = (uv * 2.0 - 1.0) * vec2<f32>(aspect, 1.0);
 
-                // Setup the global horizon split line
                 let horizonY = -0.55;
                 let isWater = p.y < horizonY;
                 
                 var renderP = p;
                 if (isWater) {
-                    // Mirror space + mix high/low frequency wave distortions
                     let waveOffset = sin(p.y * 70.0 - uniforms.time * 3.0) * 0.005 
                                    + sin(p.x * 25.0 + uniforms.time * 1.5) * 0.002;
                     renderP.y = horizonY * 2.0 - p.y + waveOffset;
                     renderP.x = p.x + sin(p.y * 120.0 + uniforms.time * 4.0) * 0.003;
                 }
 
-                // --- 1. SKY GRADIENT GENERATION (Saffron Sunset) ---
+                // 1. SKY GRADIENT (Saffron Sunset)
                 let skyYellow   = vec3<f32>(0.98, 0.76, 0.32);
                 let skySaffron  = vec3<f32>(0.96, 0.43, 0.15);
                 let skyPink     = vec3<f32>(0.75, 0.22, 0.28);
@@ -194,17 +184,15 @@
                 sky = mix(sky, skyPurple, smoothstep(0.1, 0.9, renderP.y));
                 sky = mix(sky, skySaffron, exp(-3.0 * abs(renderP.y + 0.15)));
 
-                // Soft stratus sky clouds
                 let cloudNoise = fbm(vec2<f32>(renderP.x * 2.0 + uniforms.time * 0.02, renderP.y * 8.0));
                 sky = mix(sky, vec3<f32>(0.84, 0.28, 0.18), cloudNoise * 0.3 * smoothstep(-0.4, 0.7, renderP.y));
 
                 var finalScene = sky;
 
-                // --- 2. MOUNT FUJI LAYERING (Flat Plateau Top) ---
+                // 2. MOUNT FUJI LAYERING (Flat Plateau Top)
                 let fujiX = renderP.x + 0.05;
                 let fujiSlope = 0.58 * exp(-2.0 * abs(fujiX)) + 0.06 * exp(-0.3 * abs(fujiX));
                 
-                // Set the flat plateau cutoff clip
                 var fujiHeight = fujiSlope - 0.25;
                 let isPlateau = fujiHeight > 0.26;
                 if (isPlateau) { fujiHeight = 0.26; }
@@ -215,19 +203,17 @@
                 if (renderP.y < fujiHeight && renderP.y > horizonY) {
                     finalScene = fujiBaseColor;
                     
-                    // Procedural snowcap mapping with vertical erosion lines
                     let snowCutoff = 0.12;
                     if (renderP.y > fujiHeight - snowCutoff) {
                         let erosionPattern = noise(vec2<f32>(fujiX * 40.0, renderP.y * 10.0)) * 0.03 
                                            + noise(vec2<f32>(fujiX * 120.0, 1.0)) * 0.01;
                         if (renderP.y + erosionPattern > 0.14 || isPlateau) {
-                            // Blend the warm saffron atmosphere color into the snowcap highlights
                             finalScene = mix(snowColor, skySaffron, 0.15);
                         }
                     }
                 }
 
-                // --- 3. MID-GROUND JAGGED MOUNTAIN RIDGES ---
+                // 3. MID-GROUND JAGGED MOUNTAIN RIDGES
                 let midRidgeY = -0.38 + noise(vec2<f32>(renderP.x * 4.5, 2.3)) * 0.06 
                                       + noise(vec2<f32>(renderP.x * 20.0, 0.5)) * 0.008;
                 if (renderP.y < midRidgeY && renderP.y > horizonY) {
@@ -239,10 +225,9 @@
                     finalScene = vec3<f32>(0.04, 0.11, 0.24);
                 }
 
-                // --- 4. FOREGROUND ASSET SDFs (Lighthouse & Torii Gate) ---
+                // 4. FOREGROUND SHAPES (Lighthouse & Torii Gate)
                 let darkSilhouette = vec3<f32>(0.01, 0.03, 0.08);
                 
-                // Torii Gate SDF Configuration
                 let toriiPos = renderP - vec2<f32>(-0.45, -0.56);
                 let postL = sdBox(toriiPos - vec2<f32>(-0.07, 0.0), vec2<f32>(0.006, 0.04));
                 let postR = sdBox(toriiPos - vec2<f32>(0.07, 0.0), vec2<f32>(0.006, 0.04));
@@ -253,7 +238,6 @@
                     finalScene = darkSilhouette;
                 }
 
-                // Lighthouse Structure SDF Configuration
                 let lightPos = renderP - vec2<f32>(-0.75, -0.46);
                 let base = sdBox(lightPos - vec2<f32>(0.0, -0.05), vec2<f32>(0.022, 0.06));
                 let shaft = sdBox(lightPos - vec2<f32>(0.0, 0.04), vec2<f32>(0.015, 0.05));
@@ -262,30 +246,24 @@
                 let dome = length(lightPos - vec2<f32>(0.0, 0.138)) - 0.012;
                 let lighthouseSDF = min(min(min(min(base, shaft), gallery), lantern), dome);
                 if (lighthouseSDF < 0.0 && renderP.y > horizonY) {
-                    finalScene = vec3<f32>(0.85, 0.88, 0.92); // Clean stone white structure
+                    finalScene = vec3<f32>(0.85, 0.88, 0.92);
                 }
 
-                // Volumetric Beam Lantern Light Glow
+                // Lantern Light Beam Glow
                 let beamPos = lightPos - vec2<f32>(0.0, 0.12);
-                let angle = atan2(beamPos.y, abs(beamPos.x));
-                // Creates a cone spreading outward toward the right
                 if (beamPos.y > 0.0 && beamPos.y < 0.4 && abs(beamPos.x) < beamPos.y * 1.8 + 0.01) {
                     let beamGlow = (1.0 - (beamPos.y / 0.4)) * 0.35;
                     finalScene += vec3<f32>(1.0, 0.85, 0.45) * beamGlow;
                 }
 
-                // Foreground Rocky Shore Baseline Layer
                 let shoreY = -0.57 + noise(vec2<f32>(renderP.x * 8.0, 9.1)) * 0.025;
                 if (renderP.y < shoreY && renderP.y > horizonY) {
                     finalScene = darkSilhouette;
                 }
 
-                // --- 5. COMPOSITION COMBINATION (Water vs Sky Engine) ---
+                // 5. REFLECTION AND RENDERING OUTPUT
                 if (isWater) {
-                    // Compress, shade, and mirror colors across the lower reflection pass
                     let waterBaseColor = finalScene * 0.52 + vec3<f32>(0.02, 0.04, 0.08);
-                    
-                    // Add bright horizontal dynamic sunrise specular tracks
                     let specularGlow = exp(-8.0 * abs(p.x - 0.1)) * (sin(p.y * 180.0 + uniforms.time * 6.0) * 0.12 + 0.14);
                     return vec4<f32>(waterBaseColor + skySaffron * max(specularGlow, 0.0), 1.0);
                 }
@@ -294,7 +272,6 @@
             }
         `;
 
-        // --- Core Layout Engine ---
         async function init() {
             if (!navigator.gpu) {
                 document.getElementById('gpuCanvas').style.display = 'none';
