@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fuji Sunset Dashboard</title>
+    <title>Fuji Sunrise Dashboard</title>
     <style>
         :root {
             --bg-color: #060913;
@@ -68,11 +68,61 @@
         h2 { font-size: 1.1rem; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: #fff; font-weight: 700; }
         p { line-height: 1.5; color: #9ca3af; font-size: 0.85rem; }
         .learn-more { color: #d1d5db; font-size: 0.8rem; text-decoration: none; display: block; margin-top: 12px; font-weight: 600; cursor: pointer;}
+
+        /* --- 🕊️ CSS Cartoon Bird Animation Framework --- */
+        .bird-group {
+            position: fixed;
+            top: 20vh;
+            left: -15vw;
+            width: 180px;
+            height: 120px;
+            z-index: 5; /* Sandwiched behind cards but in front of mountain */
+            pointer-events: none;
+            display: none;
+        }
+
+        /* Stylized vector wings using basic CSS borders */
+        .bird {
+            position: absolute;
+            width: 16px;
+            height: 8px;
+            opacity: 0.75;
+        }
+        .bird::before, .bird::after {
+            content: '';
+            position: absolute;
+            top: 0; width: 8px; height: 8px;
+            border-top: 2.5px solid #0a1833;
+            border-radius: 50% 50% 0 0;
+        }
+        .bird::before { left: 0; border-left: 2.5px solid #0a1833; transform-origin: right bottom; animation: flapLeft 0.4s ease-in-out infinite alternate; }
+        .bird::after { right: 0; border-right: 2.5px solid #0a1833; transform-origin: left bottom; animation: flapRight 0.4s ease-in-out infinite alternate; }
+
+        /* Flocking group position offsets */
+        .b1 { top: 20px; left: 10px; transform: scale(0.8); }
+        .b2 { top: 45px; left: 60px; transform: scale(1.0); }
+        .b3 { top: 15px; left: 110px; transform: scale(0.7); }
+        .b4 { top: 60px; left: 140px; transform: scale(0.9); }
+
+        @keyframes flapLeft  { 0% { transform: rotate(25deg); } 100% { transform: rotate(-35deg); } }
+        @keyframes flapRight { 0% { transform: rotate(-25deg); } 100% { transform: rotate(35deg); } }
+
+        @keyframes flyAcross {
+            0%   { left: -15vw; }
+            100% { left: 115vw; }
+        }
     </style>
 </head>
 <body>
 
     <canvas id="gpuCanvas"></canvas>
+
+    <div class="bird-group" id="birdSwarm">
+        <div class="bird b1"></div>
+        <div class="bird b2"></div>
+        <div class="bird b3"></div>
+        <div class="bird b4"></div>
+    </div>
 
     <nav class="sidebar">
         <div class="logo">BABYLON//OS</div>
@@ -168,28 +218,31 @@
                 
                 var renderP = p;
                 if (isWater) {
-                    let waveOffset = sin(p.y * 70.0 - uniforms.time * 3.0) * 0.005 
-                                   + sin(p.x * 25.0 + uniforms.time * 1.5) * 0.002;
+                    let waveOffset = sin(p.y * 50.0 - uniforms.time * 2.5) * 0.006 
+                                   + sin(p.x * 20.0 + uniforms.time * 1.2) * 0.002;
                     renderP.y = horizonY * 2.0 - p.y + waveOffset;
-                    renderP.x = p.x + sin(p.y * 120.0 + uniforms.time * 4.0) * 0.003;
+                    renderP.x = p.x + sin(p.y * 100.0 + uniforms.time * 3.5) * 0.003;
                 }
 
-                // 1. SKY GRADIENT (Saffron Sunset)
-                let skyYellow   = vec3<f32>(0.98, 0.76, 0.32);
-                let skySaffron  = vec3<f32>(0.96, 0.43, 0.15);
-                let skyPink     = vec3<f32>(0.75, 0.22, 0.28);
-                let skyPurple   = vec3<f32>(0.15, 0.08, 0.25);
+                // --- 1. NEW COLOR BALANCING ENGINE (Sky Blue & Saffron) ---
+                let skyBlueTint   = vec3<f32>(0.38, 0.68, 0.88); // Crisp Light Sky Blue Upper Atmosphere
+                let saffronOrange = vec3<f32>(0.96, 0.43, 0.15); // Signature Saffron
+                let skyPinkish    = vec3<f32>(0.84, 0.48, 0.42); // Transition Tone
+                let waterClearBlue= vec3<f32>(0.22, 0.48, 0.76); // Clean Clear Sky Blue Water Surface
 
-                var sky = mix(skyPink, skyYellow, smoothstep(-0.6, 0.4, renderP.y));
-                sky = mix(sky, skyPurple, smoothstep(0.1, 0.9, renderP.y));
-                sky = mix(sky, skySaffron, exp(-3.0 * abs(renderP.y + 0.15)));
+                // Generate Sky Gradient Block
+                var sky = mix(skyPinkish, skyBlueTint, smoothstep(-0.5, 0.6, renderP.y));
+                // Overlay dense concentrated saffron sunset band tracking directly above horizon line
+                let saffronGlow = exp(-3.8 * abs(renderP.y + 0.32));
+                sky = mix(sky, saffronOrange, saffronGlow * 0.95);
 
-                let cloudNoise = fbm(vec2<f32>(renderP.x * 2.0 + uniforms.time * 0.02, renderP.y * 8.0));
-                sky = mix(sky, vec3<f32>(0.84, 0.28, 0.18), cloudNoise * 0.3 * smoothstep(-0.4, 0.7, renderP.y));
+                // Delicate horizontal dynamic cloud wisps
+                let cloudNoise = fbm(vec2<f32>(renderP.x * 1.8 + uniforms.time * 0.015, renderP.y * 7.0));
+                sky = mix(sky, vec3<f32>(0.88, 0.36, 0.22), cloudNoise * 0.28 * smoothstep(-0.5, 0.5, renderP.y));
 
                 var finalScene = sky;
 
-                // 2. MOUNT FUJI LAYERING (Flat Plateau Top)
+                // --- 2. MOUNT FUJI LAYER CONFIGURATION ---
                 let fujiX = renderP.x + 0.05;
                 let fujiSlope = 0.58 * exp(-2.0 * abs(fujiX)) + 0.06 * exp(-0.3 * abs(fujiX));
                 
@@ -198,7 +251,7 @@
                 if (isPlateau) { fujiHeight = 0.26; }
 
                 let fujiBaseColor = vec3<f32>(0.12, 0.26, 0.48);
-                let snowColor     = vec3<f32>(0.92, 0.94, 0.98);
+                let snowColor     = vec3<f32>(0.94, 0.96, 0.98);
 
                 if (renderP.y < fujiHeight && renderP.y > horizonY) {
                     finalScene = fujiBaseColor;
@@ -208,12 +261,12 @@
                         let erosionPattern = noise(vec2<f32>(fujiX * 40.0, renderP.y * 10.0)) * 0.03 
                                            + noise(vec2<f32>(fujiX * 120.0, 1.0)) * 0.01;
                         if (renderP.y + erosionPattern > 0.14 || isPlateau) {
-                            finalScene = mix(snowColor, skySaffron, 0.15);
+                            finalScene = mix(snowColor, saffronOrange, 0.15);
                         }
                     }
                 }
 
-                // 3. MID-GROUND JAGGED MOUNTAIN RIDGES
+                // --- 3. MID-GROUND MOUNTAIN SILHOUETTES ---
                 let midRidgeY = -0.38 + noise(vec2<f32>(renderP.x * 4.5, 2.3)) * 0.06 
                                       + noise(vec2<f32>(renderP.x * 20.0, 0.5)) * 0.008;
                 if (renderP.y < midRidgeY && renderP.y > horizonY) {
@@ -225,7 +278,7 @@
                     finalScene = vec3<f32>(0.04, 0.11, 0.24);
                 }
 
-                // 4. FOREGROUND SHAPES (Lighthouse & Torii Gate)
+                // --- 4. FOREGROUND STRUCTURES (Torii, Lighthouse & Shores) ---
                 let darkSilhouette = vec3<f32>(0.01, 0.03, 0.08);
                 
                 let toriiPos = renderP - vec2<f32>(-0.45, -0.56);
@@ -249,7 +302,6 @@
                     finalScene = vec3<f32>(0.85, 0.88, 0.92);
                 }
 
-                // Lantern Light Beam Glow
                 let beamPos = lightPos - vec2<f32>(0.0, 0.12);
                 if (beamPos.y > 0.0 && beamPos.y < 0.4 && abs(beamPos.x) < beamPos.y * 1.8 + 0.01) {
                     let beamGlow = (1.0 - (beamPos.y / 0.4)) * 0.35;
@@ -261,21 +313,48 @@
                     finalScene = darkSilhouette;
                 }
 
-                // 5. REFLECTION AND RENDERING OUTPUT
+                // --- 5. COMPOSITION DISPATCH PASS (Water vs Atmosphere Rendering) ---
                 if (isWater) {
-                    let waterBaseColor = finalScene * 0.52 + vec3<f32>(0.02, 0.04, 0.08);
-                    let specularGlow = exp(-8.0 * abs(p.x - 0.1)) * (sin(p.y * 180.0 + uniforms.time * 6.0) * 0.12 + 0.14);
-                    return vec4<f32>(waterBaseColor + skySaffron * max(specularGlow, 0.0), 1.0);
+                    // Mix mirror scene colors onto the clear sky-blue water baseline layer
+                    let waterBaseColor = mix(waterClearBlue, finalScene, 0.45) * 0.72 + vec3<f32>(0.01, 0.02, 0.05);
+                    
+                    // Brilliant horizontal saffron sunrise reflection highlights tracing water lines
+                    let specularTrack = exp(-6.0 * abs(p.x - 0.15)) * (sin(p.y * 160.0 + uniforms.time * 5.0) * 0.14 + 0.16);
+                    return vec4<f32>(waterBaseColor + saffronOrange * max(specularTrack, 0.0), 1.0);
                 }
 
                 return vec4<f32>(finalScene, 1.0);
             }
         `;
 
+        // --- 🕊️ Client Javascript Bird Flight Sequencer ---
+        function triggerBirdGroupFlight() {
+            const swarm = document.getElementById('birdSwarm');
+            
+            // Randomly position height cross tracking between upper peaks and cards
+            const minHeight = 12; 
+            const maxHeight = 35;
+            const flightHeight = Math.random() * (maxHeight - minHeight) + minHeight;
+            swarm.style.top = `${flightHeight}vh`;
+
+            // Hard reset animation nodes
+            swarm.style.animation = 'none';
+            swarm.offsetHeight; /* trigger browser repaint layout shift */
+            
+            swarm.style.display = 'block';
+            // Smooth linear crawl crossing the wide horizon line
+            swarm.style.animation = 'flyAcross 18s linear forwards';
+        }
+
+        // Loop the script to queue bird groups periodically
+        setInterval(triggerBirdGroupFlight, 28000); // Launches a new flock every 28 seconds
+        setTimeout(triggerBirdGroupFlight, 4000);   // Initial launch sequence 4 seconds after page initializes
+
+        // --- Core WebGPU Application Initialization Engine ---
         async function init() {
             if (!navigator.gpu) {
                 document.getElementById('gpuCanvas').style.display = 'none';
-                document.body.style.background = 'linear-gradient(to bottom, #964315, #060913)';
+                document.body.style.background = 'linear-gradient(to bottom, #366888, #060913)';
                 return;
             }
 
