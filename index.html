@@ -3,94 +3,284 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple WebGPU Mount Fuji</title>
+    <title>Fuji Sunset Portfolio</title>
     <style>
-        * { margin: 0; padding: 0; overflow: hidden; background: #0b132b; }
-        canvas { display: block; width: 100vw; height: 100vh; }
+        :root {
+            --bg-color: #0b111e;
+            --text-color: #f3f4f6;
+            --accent-color: #f97316; /* Saffron Orange */
+            --glass-bg: rgba(15, 23, 42, 0.55);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-color); overflow: hidden; min-height: 100vh; }
+        
+        canvas {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 1;
+        }
+
+        /* Semantic UI Navigation Overlay */
+        nav {
+            position: fixed;
+            top: 0; left: 0; width: 100%;
+            padding: 25px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+            background: linear-gradient(to bottom, rgba(11,17,30,0.6), rgba(11,17,30,0));
+            backdrop-filter: blur(4px);
+        }
+        .logo { font-weight: 800; font-size: 1.2rem; cursor: pointer; letter-spacing: 2px; color: #fff; }
+        .nav-links { display: flex; gap: 35px; list-style: none; }
+        .nav-links a { 
+            color: #9ca3af; text-decoration: none; font-size: 0.9rem; font-weight: 600;
+            transition: 0.3s; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent-color); text-shadow: 0 0 15px rgba(249,115,22,0.4); }
+
+        /* Container Framework */
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 140px 40px 80px 40px;
+            display: flex;
+            justify-content: flex-end; /* Matches the layout balance of your reference image */
+            min-height: 100vh;
+            pointer-events: none;
+        }
+        .interactive-zone { pointer-events: auto; width: 380px; }
+
+        .page { display: none; animation: pageIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .page.active { display: block; }
+
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 35px;
+            margin-bottom: 25px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        h2 { font-size: 1.8rem; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; color: #fff; }
+        p { line-height: 1.6; color: #d1d5db; font-size: 0.95rem; margin-bottom: 15px; }
+        
+        .btn-link {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-block;
+            transition: 0.2s;
+        }
+        .btn-link:hover { text-shadow: 0 0 10px rgba(249,115,22,0.3); }
+
+        @keyframes pageIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
     </style>
 </head>
 <body>
 
-    <canvas id="fujiCanvas"></canvas>
+    <canvas id="gpuCanvas"></canvas>
+
+    <nav class="interactive-zone">
+        <div class="logo" onclick="route('home')">BABYLON//OS</div>
+        <ul class="nav-links">
+            <li><a onclick="route('portfolio')" id="link-portfolio">Portfolio</a></li>
+            <li><a onclick="route('blog')" id="link-blog">Blog</a></li>
+            <li><a onclick="route('cv')" id="link-cv">CV</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <div class="interactive-zone">
+            
+            <div id="page-home" class="page active">
+                <div class="card">
+                    <h2>Creative Hub</h2>
+                    <p>Welcome to my architecture display space. This framework uses WebGPU and low-level WGSL shader logic to execute photorealistic elements natively inside the browser context.</p>
+                </div>
+            </div>
+
+            <div id="page-portfolio" class="page">
+                <div class="card">
+                    <h2>Portfolio</h2>
+                    <p>A compilation of hardware-accelerated vector rendering modules, custom fragment pipelines, and zero-mesh mathematical topography design units.</p>
+                    <a class="btn-link">Learn more →</a>
+                </div>
+            </div>
+
+            <div id="page-blog" class="page">
+                <div class="card">
+                    <h2>Blog Log</h2>
+                    <p>Technical updates covering mathematical horizon approximations, structural color blending, and memory buffer parsing layouts.</p>
+                    <a class="btn-link">Read entry →</a>
+                </div>
+            </div>
+
+            <div id="page-cv" class="page">
+                <div class="card">
+                    <h2>Curriculum</h2>
+                    <p>Senior Graphics and Kernel Space Engineer focused on building minimal-overhead presentation runtimes for creative software deployment platforms.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
 
     <script type="module">
-        // 1. Shading Language (WGSL) - Draws the exact shapes procedurally
         const shaderSource = `
             struct Uniforms {
-                res: vec2<f32>,
+                time: f32,
+                padding: f32,
+                res: vec2<f32>
             }
             @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
-            struct VertexOutput {
+            struct VO {
                 @builtin(position) pos: vec4<f32>,
                 @location(0) uv: vec2<f32>
             }
 
             @vertex
-            fn vs_main(@builtin(vertex_index) idx: u32) -> VertexOutput {
-                // Generates a full-screen triangle procedurally without vertex arrays
-                var pos = array<vec2<f32>, 3>(
-                    vec2<f32>(-1.0, -1.0),
-                    vec2<f32>( 3.0, -1.0),
-                    vec2<f32>(-1.0,  3.0)
-                );
-                var out: VertexOutput;
+            fn vs_main(@builtin(vertex_index) idx: u32) -> VO {
+                var pos = array<vec2<f32>, 3>(vec2<f32>(-1.,-1.), vec2<f32>(3.,-1.), vec2<f32>(-1.,3.));
+                var out: VO;
                 out.pos = vec4<f32>(pos[idx], 0.0, 1.0);
                 out.uv = pos[idx] * 0.5 + 0.5;
                 return out;
             }
 
+            // Simple noise implementation to build organic mountain ridges
+            fn hash(x: f32) -> f32 {
+                return fract(sin(x * 123.456) * 43758.5453);
+            }
+            fn noise(x: f32) -> f32 {
+                let i = floor(x);
+                let f = fract(x);
+                let u = f * f * (3.0 - 2.0 * f);
+                return mix(hash(i), hash(i + 1.0), u);
+            }
+
             @fragment
-            fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+            fn fs_main(in: VO) -> @location(0) vec4<f32> {
                 let uv = in.uv;
-                // Correct coordinate system for aspect ratios
-                let aspectUV = (uv * 2.0 - 1.0) * vec2<f32>(uniforms.res.x / uniforms.res.y, 1.0);
+                let aspect = uniforms.res.x / uniforms.res.y;
+                let p = (uv * 2.0 - 1.0) * vec2<f32>(aspect, 1.0);
 
-                // Sky color background
-                let skyColor = vec4<f32>(0.15, 0.25, 0.45, 1.0);
+                // Isolate reflection space below the horizon line
+                let isReflection = p.y < -0.65;
+                var spaceY = p.y;
+                var spaceX = p.x;
 
-                // Mathematical curve generating the volcano slopes
-                let fujiX = aspectUV.x;
-                let slope = 0.58 * exp(-2.8 * abs(fujiX)) + 0.12 * exp(-0.3 * abs(fujiX));
-                let fujiHeight = slope - 0.45;
-
-                // If the current pixel is beneath the mountain's height curve
-                if (aspectUV.y < fujiHeight) {
-                    let fujiSkyBlue = vec4<f32>(0.32, 0.58, 0.82, 1.0); // Mountain base
-                    let snowWhite = vec4<f32>(0.96, 0.98, 1.0, 1.0);     // Snowcap top
-
-                    // Cutoff threshold line for the cartoon snowcap
-                    if (aspectUV.y > fujiHeight - 0.09 && aspectUV.y > -0.28) {
-                        // Procedural stylized ridges on the snow boundary edge
-                        let ridgeWave = sin(aspectUV.x * 28.0) * 0.012;
-                        if (aspectUV.y + ridgeWave > -0.25) {
-                            return snowWhite;
-                        }
-                    }
-                    return fujiSkyBlue;
+                if (isReflection) {
+                    // Mirror coordinates vertically and add a rhythmic water ripple calculation
+                    let ripple = sin(p.y * 40.0 + uniforms.time * 2.5) * 0.004;
+                    spaceY = -1.3 - p.y + ripple;
+                    spaceX = p.x + sin(p.y * 100.0 + uniforms.time * 4.0) * 0.002;
                 }
 
-                return skyColor;
+                // --- 1. Saffron Sunset Sky Gradient Engine ---
+                let skyPurple = vec3<f32>(0.35, 0.08, 0.22); // Deep horizon sunset plum
+                let skySaffron = vec3<f32>(0.96, 0.48, 0.12); // Vibrant Saffron Orange
+                let skyYellow = vec3<f32>(0.98, 0.72, 0.34);  // Upper sky glow tint
+                
+                var skyColor = mix(skySaffron, skyPurple, smoothstep(-0.65, -0.1, spaceY));
+                skyColor = mix(skyColor, skyYellow, smoothstep(-0.1, 0.8, spaceY));
+
+                // Add delicate horizontal stratus clouds
+                let cloudPattern = sin(spaceX * 1.5) * cos(spaceY * 15.0 + 2.0) * exp(-abs(spaceY - 0.5) * 3.0);
+                if (cloudPattern > 0.1 && spaceY > -0.65) {
+                    skyColor = mix(skyColor, vec3<f32>(0.85, 0.32, 0.15), 0.35);
+                }
+
+                // --- 2. Mount Fuji Vector Construction (Near-Flat Top) ---
+                let fujiX = spaceX - 0.1; // Centered position tweak matching the layout
+                // Custom bell-curve formula adjusted to replicate real Fuji distribution
+                let fujiSlope = 0.58 * exp(-2.2 * abs(fujiX)) + 0.08 * exp(-0.2 * abs(fujiX));
+                
+                // Flat cap clipping implementation
+                var fujiHeight = fujiSlope - 0.38;
+                if (fujiHeight > 0.14) {
+                    fujiHeight = 0.14; // Creates the iconic near-flat plateau top
+                }
+
+                let fujiBlue = vec3<f32>(0.08, 0.28, 0.48); // Classic deep indigo blue
+
+                if (spaceY < fujiHeight && spaceY > -0.65) {
+                    // Define the dynamic snowcap threshold layout boundary
+                    if (spaceY > fujiHeight - 0.22) {
+                        // Adds realistic vertical erosion lines onto the snow boundaries
+                        let erosion = noise(fujiX * 45.0) * 0.025 + noise(fujiX * 12.0) * 0.015;
+                        if (spaceY + erosion > -0.04) {
+                            // Blend sky glow color slightly onto the white snow cap face
+                            return vec4<f32>(mix(vec3<f32>(0.88, 0.92, 0.96), skySaffron, 0.15), 1.0);
+                        }
+                    }
+                    return vec4<f32>(fujiBlue, 1.0);
+                }
+
+                // --- 3. Multi-Layered Mid-Ground Mountain Silhouettes ---
+                // Layer A (Distant low mountain layer behind Torii Gate)
+                let layerA_Height = -0.42 + noise(spaceX * 6.0) * 0.03 + noise(spaceX * 22.0) * 0.006;
+                if (spaceY < layerA_Height && spaceY > -0.65) {
+                    return vec4<f32>(vec3<f32>(0.05, 0.18, 0.34), 1.0);
+                }
+
+                // Layer B (Foreground coastline rocks layer)
+                let layerB_Height = -0.54 + noise((spaceX + 1.0) * 4.0) * 0.04 * sin(spaceX * 2.0);
+                if (spaceY < layerB_Height && spaceY > -0.65) {
+                    return vec4<f32>(vec3<f32>(0.02, 0.11, 0.22), 1.0);
+                }
+
+                // --- 4. Final Composition Assembly (Sky vs Water Execution) ---
+                if (isReflection) {
+                    // Dampen the lighting values slightly to imply water absorbency
+                    return vec4<f32>(skyColor * 0.62 + vec3<f32>(0.0, 0.02, 0.06), 1.0);
+                }
+
+                return vec4<f32>(skyColor, 1.0);
             }
         `;
 
-        // 2. Main WebGPU Hardware Setup Execution Loop
+        // --- Core Router State Mechanism ---
+        window.route = function(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+            
+            const targetPage = document.getElementById(`page-${pageId}`);
+            if (targetPage) targetPage.classList.add('active');
+            
+            const targetLink = document.getElementById(`link-${pageId}`);
+            if (targetLink) targetLink.classList.add('active');
+        }
+
+        // --- Hardware Interface Execution Bootstrapper ---
         async function run() {
             if (!navigator.gpu) {
-                console.error("WebGPU is not supported or enabled in this browser configuration.");
+                document.getElementById('gpuCanvas').style.display = 'none';
+                document.body.style.background = 'linear-gradient(to bottom, #963012, #0b111e)';
                 return;
             }
 
             const adapter = await navigator.gpu.requestAdapter();
             const device = await adapter.requestDevice();
-            const canvas = document.getElementById("fujiCanvas");
+            const canvas = document.getElementById("gpuCanvas");
             const context = canvas.getContext("webgpu");
             const format = navigator.gpu.getPreferredCanvasFormat();
             
             const dpr = window.devicePixelRatio || 1;
-            canvas.width = window.innerWidth * dpr;
-            canvas.height = window.innerHeight * dpr;
-            
+            canvas.width = window.innerWidth * dpr; canvas.height = window.innerHeight * dpr;
             context.configure({ device, format, alphaMode: "opaque" });
 
             const module = device.createShaderModule({ code: shaderSource });
@@ -100,50 +290,45 @@
                 fragment: { module, entryPoint: "fs_main", targets: [{ format }] }
             });
 
-            // Create a small 8-byte buffer to transmit canvas dimensions
-            const uniformBuffer = device.createBuffer({
-                size: 8,
-                usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
-            });
-
+            // 16 Byte aligned layout buffer allocation
+            const uniformBuffer = device.createBuffer({ size: 16, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
             const bindGroup = device.createBindGroup({
                 layout: pipeline.getBindGroupLayout(0),
                 entries: [{ binding: 0, resource: { buffer: uniformBuffer } }]
             });
 
-            const uniformData = new Float32Array(2);
+            const uniformData = new Float32Array(4);
 
-            function frame() {
-                uniformData[0] = canvas.width;
-                uniformData[1] = canvas.height;
+            function drawFrame(time) {
+                uniformData[0] = time * 0.001; // runtime tracker clock
+                uniformData[1] = 0.0;          // padding element
+                uniformData[2] = canvas.width;
+                uniformData[3] = canvas.height;
                 device.queue.writeBuffer(uniformBuffer, 0, uniformData);
 
                 const encoder = device.createCommandEncoder();
                 const pass = encoder.beginRenderPass({
                     colorAttachments: [{
                         view: context.getCurrentTexture().createView(),
-                        loadOp: "clear",
-                        storeOp: "store",
-                        clearValue: { r: 0.15, g: 0.25, b: 0.45, a: 1.0 }
+                        loadOp: "clear", storeOp: "store",
+                        clearValue: { r: 0.11, g: 0.17, b: 0.3, a: 1.0 }
                     }]
                 });
 
                 pass.setPipeline(pipeline);
                 pass.setBindGroup(0, bindGroup);
-                pass.draw(3); // Draw the procedural full-screen shape
+                pass.draw(3);
                 pass.end();
-                
                 device.queue.submit([encoder.finish()]);
-                requestAnimationFrame(frame);
+
+                requestAnimationFrame(drawFrame);
             }
-            requestAnimationFrame(frame);
+            requestAnimationFrame(drawFrame);
 
             window.addEventListener("resize", () => {
-                canvas.width = window.innerWidth * dpr;
-                canvas.height = window.innerHeight * dpr;
+                canvas.width = window.innerWidth * dpr; canvas.height = window.innerHeight * dpr;
             });
         }
-        
         run();
     </script>
 </body>
