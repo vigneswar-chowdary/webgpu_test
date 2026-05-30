@@ -3,36 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minimal WebGPU Art</title>
+    <title>Interactive WebGPU CV</title>
     <style>
-        * { margin: 0; padding: 0; overflow: hidden; background: #05050a; }
-        canvas { display: block; width: 100vw; height: 100vh; }
+        /* Modern Glassmorphic Design */
+        :root {
+            --bg-color: #06060e;
+            --text-color: #f1f1f7;
+            --accent-color: #00f0ff;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-color); overflow-x: hidden; }
+        
+        /* Fixed Background Canvas */
+        #gpuCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            pointer-events: none; /* Let clicks pass through to content */
+        }
+
+        /* Scrollable Content Layer */
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 80px 20px;
+        }
+
+        section {
+            background: rgba(15, 15, 30, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 40px;
+            transition: all 0.3s ease;
+        }
+
+        /* Hover interaction that triggers script changes */
+        section:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 240, 255, 0.1);
+        }
+
+        h1 { font-size: 3rem; margin-bottom: 10px; color: #fff; letter-spacing: -1px; }
+        h2 { font-size: 1.8rem; margin-bottom: 20px; color: var(--accent-color); }
+        h3 { font-size: 1.2rem; color: #fff; margin-bottom: 5px; }
+        p { line-height: 1.6; color: #b0b0c0; margin-bottom: 15px; }
+        
+        .subtitle { font-size: 1.2rem; color: #8a8a9e; margin-bottom: 30px; }
+        .meta { font-size: 0.9rem; color: #64647a; margin-bottom: 15px; }
+
+        .skills-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+        .skill-tag {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .skill-tag:hover {
+            background: var(--accent-color);
+            color: #000;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
+
     <canvas id="gpuCanvas"></canvas>
 
+    <div class="container">
+        <!-- Header Section -->
+        <header style="margin-bottom: 60px;">
+            <h1>Alex Mercer</h1>
+            <p class="subtitle">Graphics Engineer & Creative Developer</p>
+        </header>
+
+        <!-- About Section -->
+        <section id="about" class="interactive-trigger" data-speed="4.0">
+            <h2>About Me</h2>
+            <p>I build high-performance WebGPU architectures and real-time interactive systems. Passionate about bringing native desktop-grade graphics straight to the web browser without asset bloat.</p>
+        </section>
+
+        <!-- Experience Section -->
+        <section id="experience" class="interactive-trigger" data-speed="1.5">
+            <h2>Experience</h2>
+            <div style="margin-bottom: 25px;">
+                <h3>Lead Engine Developer — Matrix Studios</h3>
+                <p class="meta">2024 - Present</p>
+                <p>Optimized core browser engine modules, transitioning critical rendering pipelines from WebGL2 to WebGPU, reducing draw call bottlenecks by 40%.</p>
+            </div>
+            <div>
+                <h3>Frontend Engineer — PixelCraft</h3>
+                <p class="meta">2022 - 2024</p>
+                <p>Designed lightweight, interactive promotional applications using modular procedural fragment shaders.</p>
+            </div>
+        </section>
+
+        <!-- Skills Section -->
+        <section id="skills" class="interactive-trigger" data-speed="7.0">
+            <h2>Technical Weaponry</h2>
+            <div class="skills-grid">
+                <span class="skill-tag">WebGPU / WGSL</span>
+                <span class="skill-tag">JavaScript / TypeScript</span>
+                <span class="skill-tag">Rust (Wasm)</span>
+                <span class="skill-tag">Compute Shaders</span>
+                <span class="skill-tag">GLSL / HLSL</span>
+            </div>
+        </section>
+    </div>
+
+    <!-- WebGPU Core Logic -->
     <script type="module">
-        // 1. WGSL Shaders (Vertex & Fragment)
         const shaderSource = `
             struct Uniforms {
                 time: f32,
-                resolution: vec2<f32>,
+                speedMultiplier: f32,
+                resolution: vec2<f32>
             }
             @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
             struct VertexOutput {
                 @builtin(position) position: vec4<f32>,
-                @location(0) uv: vec2<f32>,
+                @location(0) uv: vec2<f32>
             }
 
             @vertex
             fn vs_main(@builtin(vertex_index) vertexIndex: u32) -> VertexOutput {
-                // Generates a full-screen triangle procedurally without vertex buffers
                 var pos = array<vec2<f32>, 3>(
-                    vec2<f32>(-1.0, -1.0),
-                    vec2<f32>( 3.0, -1.0),
-                    vec2<f32>(-1.0,  3.0)
+                    vec2<f32>(-1.0, -1.0), vec2<f32>(3.0, -1.0), vec2<f32>(-1.0, 3.0)
                 );
                 var out: VertexOutput;
                 out.position = vec4<f32>(pos[vertexIndex], 0.0, 1.0);
@@ -40,61 +148,69 @@
                 return out;
             }
 
+            // Pseudo-random generator for particle effect
+            fn hash(p: vec2<f32>) -> f32 {
+                return fraction(sin(dot(p, vec2<f32>(127.1, 311.7))) * 43758.5453123);
+            }
+
+            fn fraction(v: f32) -> f32 {
+                return v - floor(v);
+            }
+
             @fragment
             fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-                let uv = (in.uv * 2.0 - 1.0) * vec2<f32>(uniforms.resolution.x / uniforms.resolution.y, 1.0);
+                let uv = in.uv * vec2<f32>(uniforms.resolution.x / uniforms.resolution.y, 1.0);
                 
-                // Beautiful Sci-Fi Synthwave Grid Math
-                let perspective = 1.0 / (uv.y + 1.2); 
-                let gridUV = vec2<f32>(uv.x * perspective * 2.0, perspective * 5.0 - uniforms.time * 1.5);
+                var color = vec3<f32>(0.0);
+                let scale: f32 = 12.0;
+                let gridUV = floor(uv * scale);
+                let localUV = fraction(uv * scale) - 0.5;
                 
-                let lines = sin(gridUV * 15.0);
-                let gridLines = smoothstep(0.92, 0.98, max(lines.x, lines.y));
-                
-                // Color Gradients
-                let neonPurple = vec3<f32>(0.5, 0.0, 1.0);
-                let neonCyan = vec3<f32>(0.0, 0.9, 1.0);
-                var finalColor = mix(neonPurple, neonCyan, uv.y + 0.5) * (gridLines * (uv.y + 0.8));
-                
-                // Horizon Glow
-                finalColor += neonPurple * (0.15 / abs(uv.y + 0.1));
+                // Generates dynamic interactive network nodes
+                let n = hash(gridUV);
+                if (n > 0.65) {
+                    let speed = uniforms.time * (n * 0.5 + 0.2) * uniforms.speedMultiplier;
+                    let offset = vec2<f32>(sin(speed + n * 6.28), cos(speed + n * 6.28)) * 0.3;
+                    let dist = length(localUV - offset);
+                    
+                    // Dynamic glow calculation
+                    let pSize = 0.015 + (sin(uniforms.time * 2.0 + n * 10.0) * 0.005);
+                    var brightness = pSize / dist;
+                    brightness = clamp(brightness, 0.0, 1.0) * (1.0 - dist * 2.0);
+                    
+                    // Dynamic color swapping based on interaction speed
+                    var pColor = mix(vec3<f32>(0.2, 0.1, 0.4), vec3<f32>(0.0, 0.94, 1.0), uniforms.speedMultiplier * 0.2);
+                    color += pColor * brightness;
+                }
 
-                return vec4<f32>(finalColor, 1.0);
+                return vec4<f32>(color, 1.0);
             }
         `;
 
         async function init() {
-            // 2. Initialize WebGPU
-            if (!navigator.gpu) {
-                document.body.innerHTML = "<h1 style='color:white; padding:20px;'>WebGPU is not supported on this browser.</h1>";
-                return;
-            }
+            if (!navigator.gpu) return;
+            
             const adapter = await navigator.gpu.requestAdapter();
             const device = await adapter.requestDevice();
-
             const canvas = document.getElementById("gpuCanvas");
             const context = canvas.getContext("webgpu");
             const format = navigator.gpu.getPreferredCanvasFormat();
             
-            const devicePixelRatio = window.devicePixelRatio || 1;
-            canvas.width = window.innerWidth * devicePixelRatio;
-            canvas.height = window.innerHeight * devicePixelRatio;
-            
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = window.innerWidth * dpr;
+            canvas.height = window.innerHeight * dpr;
             context.configure({ device, format, alphaMode: "opaque" });
 
-            // 3. Create Pipeline
             const shaderModule = device.createShaderModule({ code: shaderSource });
             const pipeline = device.createRenderPipeline({
                 layout: "auto",
                 vertex: { module: shaderModule, entryPoint: "vs_main" },
-                fragment: { module: shaderModule, entryPoint: "fs_main", targets: [{ format }] },
-                primitive: { topology: "triangle-list" }
+                fragment: { module: shaderModule, entryPoint: "fs_main", targets: [{ format }] }
             });
 
-            // 4. Create Uniform Buffer (Time & Resolution data)
-            const uniformBufferSize = 16; // 4 bytes * 4 elements (time, alignment, resX, resY)
+            // Uniform buffer structure: time(f32), speedMultiplier(f32), resolution(vec2<f32>)
             const uniformBuffer = device.createBuffer({
-                size: uniformBufferSize,
+                size: 16,
                 usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
             });
 
@@ -103,29 +219,43 @@
                 entries: [{ binding: 0, resource: { buffer: uniformBuffer } }]
             });
 
-            // 5. Render Loop
             const uniformData = new Float32Array(4);
+            let targetSpeed = 1.0;
+            let currentSpeed = 1.0;
+
+            // Interactive Event Listeners mapping DOM to WebGPU pipeline variables
+            document.querySelectorAll('.interactive-trigger').forEach(element => {
+                element.addEventListener('mouseenter', () => {
+                    targetSpeed = parseFloat(element.getAttribute('data-speed')) || 2.0;
+                });
+                element.addEventListener('mouseleave', () => {
+                    targetSpeed = 1.0;
+                });
+            });
+
             function frame(time) {
-                uniformData[0] = time * 0.001; // Time in seconds
+                // Smooth interpolation for the speed change transition
+                currentSpeed += (targetSpeed - currentSpeed) * 0.08;
+
+                uniformData[0] = time * 0.001; 
+                uniformData[1] = currentSpeed; 
                 uniformData[2] = canvas.width;
                 uniformData[3] = canvas.height;
+                
                 device.queue.writeBuffer(uniformBuffer, 0, uniformData);
 
                 const commandEncoder = device.createCommandEncoder();
-                const textureView = context.getCurrentTexture().createView();
-                
                 const renderPass = commandEncoder.beginRenderPass({
                     colorAttachments: [{
-                        view: textureView,
-                        clearValue: { r: 0.02, g: 0.02, b: 0.04, a: 1.0 },
-                        loadOp: "clear",
-                        storeOp: "store"
+                        view: context.getCurrentTexture().createView(),
+                        clearValue: { r: 0.02, g: 0.02, b: 0.05, a: 1.0 },
+                        loadOp: "clear", storeOp: "store"
                     }]
                 });
 
                 renderPass.setPipeline(pipeline);
                 renderPass.setBindGroup(0, bindGroup);
-                renderPass.draw(3); // Draws our procedural full-screen triangle
+                renderPass.draw(3);
                 renderPass.end();
 
                 device.queue.submit([commandEncoder.finish()]);
@@ -133,10 +263,9 @@
             }
             requestAnimationFrame(frame);
 
-            // Handle Resize
             window.addEventListener("resize", () => {
-                canvas.width = window.innerWidth * devicePixelRatio;
-                canvas.height = window.innerHeight * devicePixelRatio;
+                canvas.width = window.innerWidth * dpr;
+                canvas.height = window.innerHeight * dpr;
             });
         }
 
