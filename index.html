@@ -62,23 +62,23 @@
 <!-- BEGIN: Environment Background -->
 <div class="absolute inset-0 z-0 pointer-events-none" data-purpose="scene-container">
 <!-- Mountain Geometry using SVGs -->
-<svg class="absolute bottom-0 w-full h-[80%] object-cover object-bottom" data-purpose="mountain-svg" preserveaspectratio="none" viewbox="0 0 1000 800">
+<svg class="absolute bottom-0 w-full h-[80%] object-cover object-bottom" data-purpose="mountain-svg" preserveaspectratio="xMidYMax slice" viewbox="0 0 1000 800">
 <!-- Deep Background Shadows -->
-<polygon fill="#38345c" points="0,800 0,500 150,450 250,300 350,350 450,200 600,400 800,500 1000,600 1000,800"></polygon>
+<polygon fill="#38345c" points="0,800 0,500 100,450 200,300 300,350 400,200 650,400 850,500 1000,600 1000,800"></polygon>
 <!-- Main Peak Shadow Side (Left) -->
-<polygon fill="#46426b" points="100,800 280,480 380,320 460,180 510,380 480,800"></polygon>
-<polygon fill="#585282" points="180,800 320,550 400,400 450,250 480,400"></polygon>
+<polygon fill="#46426b" points="50,800 200,480 300,320 400,180 510,380 480,800"></polygon>
+<polygon fill="#585282" points="120,800 260,550 350,400 420,250 480,400"></polygon>
 <!-- Main Peak Lit Side (Right) & Alpenglow -->
 <!-- The unique right-sided face with wide opening -->
-<polygon fill="#b85f6c" points="460,180 530,220 620,380 750,450 850,800 480,800 510,380"></polygon>
-<polygon fill="#f26f63" points="460,180 500,210 560,300 600,280 650,350 720,400 600,450 510,380"></polygon>
+<polygon fill="#b85f6c" points="400,180 500,220 650,380 800,450 950,800 480,800 510,380"></polygon>
+<polygon fill="#f26f63" points="400,180 470,210 560,300 620,280 700,350 800,400 650,450 510,380"></polygon>
 <!-- Brightest Highlights (Peak and Upper Right Edge) - Snow Capped -->
-<polygon fill="#fff" points="460,180 475,200 495,205 520,240 540,250 580,310 550,320 500,260 480,220"></polygon>
-<polygon fill="#ffece6" points="460,180 470,185 480,195 465,200"></polygon>
+<polygon fill="#fff" points="400,180 430,200 460,205 500,240 520,250 580,310 550,320 480,260 450,220"></polygon>
+<polygon fill="#ffece6" points="400,180 420,185 440,195 415,200"></polygon>
 <!-- Secondary Sloped Face (Right) -->
-<polygon fill="#e5766e" points="650,350 720,320 780,400 880,480 1000,550 1000,800 750,450"></polygon>
-<polygon fill="#ffa384" points="720,320 750,340 790,390 850,430 800,440 760,400"></polygon>
-<polygon fill="#fff" points="720,320 735,335 755,345 745,360 730,350"></polygon>
+<polygon fill="#e5766e" points="700,350 780,320 850,400 950,480 1000,550 1000,800 800,450"></polygon>
+<polygon fill="#ffa384" points="780,320 810,340 850,390 920,430 860,440 820,400"></polygon>
+<polygon fill="#fff" points="780,320 795,335 815,345 805,360 790,350"></polygon>
 <!-- Lower Left Ranges -->
 <polygon fill="#5a548c" points="0,800 0,600 80,550 180,650 250,600 300,680"></polygon>
 <polygon fill="#8c6c94" points="0,600 50,580 100,620 150,590 80,550"></polygon>
@@ -88,7 +88,7 @@
 <canvas class="absolute inset-0 w-full h-full" data-purpose="particle-mist" height="1024" id="mistCanvas" width="1280"></canvas>
 </div>
 <!-- Foreground Alpine Forest -->
-<svg class="absolute bottom-0 w-full h-[30%] z-10" data-purpose="forest-silhouette" preserveaspectratio="none" viewbox="0 0 1000 250">
+<svg class="absolute bottom-0 w-full h-[30%] z-10" data-purpose="forest-silhouette" preserveaspectratio="xMidYMax slice" viewbox="0 0 1000 250">
 <defs>
 <!-- Detailed Pine Tree Silhouettes -->
 <path d="M0,0 L-3,12 L-1,12 L-5,28 L-2,28 L-7,45 L-3,45 L-9,65 L-4,65 L-12,90 L12,90 L4,65 L9,65 L3,45 L7,45 L2,28 L5,28 L1,12 L3,12 Z" id="pine-tall"></path>
@@ -163,44 +163,40 @@
 <!-- Main Area -->
 <main class="flex-grow relative pointer-events-none w-full h-full">
 <!-- Cabin Node -->
-<div class="absolute group flex flex-col items-center justify-end pointer-events-auto cursor-pointer pb-2" style="left: 12%; bottom: 4%; width: 64px; height: 64px; z-index: 40;">
-<img alt="Cabin" class="w-full h-full object-contain filter drop-shadow-md opacity-80 group-hover:opacity-100 transition-opacity" src="https://lh3.googleusercontent.com/aida/ADBb0uhdjtopNrTP5LtpruW22kxQO4BcF7jq_f5HycBa9wODRX62P4wlwStq_kcBV10gDuQ3MYG8NRKmiVcshpV8UY_XJV_aysCCXed3zgBZhtyu-N4kFWLueKiIfulTWG0m6dOMAaiy4ukTEShtRZMY7HIyK3CQbsWmqyYzkyhQDD6Tw7FFlj3Anzw4zwZ5ecC-EleG8TFboQiVMNu0lEyPDt5cT2C161F8_rokdbXQL2e3i7SgxtYb32d5nrc"/>
+<div class="absolute group flex flex-col items-center justify-end pointer-events-auto cursor-pointer pb-2" style="left: 8%; bottom: 2%; width: 80px; height: 80px; z-index: 40;">
+<div class="absolute inset-0 bg-white/20 blur-xl rounded-full pointer-events-none"></div>
+<img alt="Cabin" class="w-full h-full object-contain filter drop-shadow-md opacity-80 group-hover:opacity-100 transition-opacity relative z-10" src="https://lh3.googleusercontent.com/aida/ADBb0uhdjtopNrTP5LtpruW22kxQO4BcF7jq_f5HycBa9wODRX62P4wlwStq_kcBV10gDuQ3MYG8NRKmiVcshpV8UY_XJV_aysCCXed3zgBZhtyu-N4kFWLueKiIfulTWG0m6dOMAaiy4ukTEShtRZMY7HIyK3CQbsWmqyYzkyhQDD6Tw7FFlj3Anzw4zwZ5ecC-EleG8TFboQiVMNu0lEyPDt5cT2C161F8_rokdbXQL2e3i7SgxtYb32d5nrc"/>
 <button class="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity px-3 py-1 text-[10px] font-medium uppercase tracking-wider bg-white/10 backdrop-blur-sm border border-white/20 rounded-full text-white hover:bg-white/30 shadow-[0_0_10px_rgba(255,255,255,0.2)] whitespace-nowrap z-30">Home</button>
 </div>
 <!-- Trekker Node -->
-<div class="absolute group flex flex-col items-center justify-end pointer-events-auto cursor-pointer pb-2" style="left: 22%; bottom: 6%; width: 50px; height: 50px; z-index: 40;">
+<div class="absolute group flex flex-col items-center justify-end pointer-events-auto cursor-pointer pb-2" style="left: 18%; bottom: 6%; width: 56px; height: 56px; z-index: 40;">
 <!-- Torch Light -->
-<div class="absolute w-20 h-8 bg-gradient-to-r from-orange-400/50 to-transparent rounded-full blur-md opacity-90 animate-pulse pointer-events-none" style="left: 75%; top: 35%; transform-origin: left center; transform: rotate(15deg);"></div>
+<div class="absolute w-24 h-10 bg-gradient-to-r from-orange-400/50 to-transparent rounded-full blur-md opacity-90 animate-pulse pointer-events-none" style="left: 75%; top: 35%; transform-origin: left center; transform: rotate(15deg);"></div>
 <div class="absolute w-2 h-2 bg-white rounded-full blur-[1px] opacity-100 animate-pulse pointer-events-none" style="left: 75%; top: 40%; box-shadow: 0 0 15px 5px rgba(251, 146, 60, 0.8);"></div>
 <!-- Trekker Silhouette -->
-<svg class="w-full h-full object-contain opacity-90 group-hover:opacity-100 transition-opacity animate-walk drop-shadow-md" fill="#060b11" viewbox="0 0 24 24">
+<svg class="w-full h-full object-contain opacity-90 group-hover:opacity-100 transition-opacity animate-walk drop-shadow-md" fill="#f8fafc" viewbox="0 0 24 24">
 <path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7"></path>
 </svg>
 <button class="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity px-3 py-1 text-[10px] font-medium uppercase tracking-wider bg-white/10 backdrop-blur-sm border border-white/20 rounded-full text-white hover:bg-white/30 shadow-[0_0_10px_rgba(255,255,255,0.2)] whitespace-nowrap z-30">Contact</button>
 </div>
-<!-- Tree Node 1 -->
-<div class="absolute bottom-0 group flex flex-col items-center justify-end pointer-events-auto cursor-pointer pb-2" style="left: 17%; width: 40px; height: 18%;">
-<div class="absolute inset-0 bg-white/0 group-hover:bg-white/5 border border-transparent group-hover:border-white/20 rounded-t-full transition-all duration-300 group-hover:shadow-[0_0_15px_rgba(255,255,255,0.2)] group-hover:-translate-y-2"></div>
-<button class="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity px-3 py-1 text-[10px] font-medium uppercase tracking-wider bg-white/10 backdrop-blur-sm border border-white/20 rounded-full text-white hover:bg-white/30 shadow-[0_0_10px_rgba(255,255,255,0.2)] whitespace-nowrap z-30">Projects</button>
+<!-- Ladder & Slide Node (Projects) -->
+<div class="absolute group flex flex-col items-center justify-end pointer-events-auto cursor-pointer pb-2" style="left: 28%; bottom: 6%; z-index: 40;">
+<div class="flex items-end space-x-1">
+<!-- Ladder -->
+<svg class="w-6 h-10 opacity-90 group-hover:opacity-100 transition-opacity drop-shadow-md" fill="none" stroke="#f8fafc" stroke-width="2" viewbox="0 0 24 40">
+<line x1="6" x2="6" y1="2" y2="38"></line>
+<line x1="18" x2="18" y1="2" y2="38"></line>
+<line x1="6" x2="18" y1="8" y2="8"></line>
+<line x1="6" x2="18" y1="16" y2="16"></line>
+<line x1="6" x2="18" y1="24" y2="24"></line>
+<line x1="6" x2="18" y1="32" y2="32"></line>
+</svg>
+<!-- Slide -->
+<svg class="w-10 h-10 opacity-90 group-hover:opacity-100 transition-opacity drop-shadow-md" fill="none" stroke="#f8fafc" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 40 40">
+<path d="M5 38 V15 M15 38 V15 M5 21 H15 M5 28 H15 M5 35 H15"></path>
+<path d="M15 15 Q 25 15 35 35"></path>
+</svg>
 </div>
-<!-- Tree Node 2 -->
-<div class="absolute bottom-0 group flex flex-col items-center justify-end pointer-events-auto cursor-pointer pb-2" style="left: 33%; width: 40px; height: 18%;">
-<div class="absolute inset-0 bg-white/0 group-hover:bg-white/5 border border-transparent group-hover:border-white/20 rounded-t-full transition-all duration-300 group-hover:shadow-[0_0_15px_rgba(255,255,255,0.2)] group-hover:-translate-y-2"></div>
-<button class="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity px-3 py-1 text-[10px] font-medium uppercase tracking-wider bg-white/10 backdrop-blur-sm border border-white/20 rounded-full text-white hover:bg-white/30 shadow-[0_0_10px_rgba(255,255,255,0.2)] whitespace-nowrap z-30">Projects</button>
-</div>
-<!-- Tree Node 3 -->
-<div class="absolute bottom-0 group flex flex-col items-center justify-end pointer-events-auto cursor-pointer pb-2" style="left: 48%; width: 40px; height: 18%;">
-<div class="absolute inset-0 bg-white/0 group-hover:bg-white/5 border border-transparent group-hover:border-white/20 rounded-t-full transition-all duration-300 group-hover:shadow-[0_0_15px_rgba(255,255,255,0.2)] group-hover:-translate-y-2"></div>
-<button class="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity px-3 py-1 text-[10px] font-medium uppercase tracking-wider bg-white/10 backdrop-blur-sm border border-white/20 rounded-full text-white hover:bg-white/30 shadow-[0_0_10px_rgba(255,255,255,0.2)] whitespace-nowrap z-30">Projects</button>
-</div>
-<!-- Tree Node 4 -->
-<div class="absolute bottom-0 group flex flex-col items-center justify-end pointer-events-auto cursor-pointer pb-2" style="left: 64%; width: 40px; height: 18%;">
-<div class="absolute inset-0 bg-white/0 group-hover:bg-white/5 border border-transparent group-hover:border-white/20 rounded-t-full transition-all duration-300 group-hover:shadow-[0_0_15px_rgba(255,255,255,0.2)] group-hover:-translate-y-2"></div>
-<button class="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity px-3 py-1 text-[10px] font-medium uppercase tracking-wider bg-white/10 backdrop-blur-sm border border-white/20 rounded-full text-white hover:bg-white/30 shadow-[0_0_10px_rgba(255,255,255,0.2)] whitespace-nowrap z-30">Projects</button>
-</div>
-<!-- Tree Node 5 -->
-<div class="absolute bottom-0 group flex flex-col items-center justify-end pointer-events-auto cursor-pointer pb-2" style="left: 88%; width: 40px; height: 18%;">
-<div class="absolute inset-0 bg-white/0 group-hover:bg-white/5 border border-transparent group-hover:border-white/20 rounded-t-full transition-all duration-300 group-hover:shadow-[0_0_15px_rgba(255,255,255,0.2)] group-hover:-translate-y-2"></div>
 <button class="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity px-3 py-1 text-[10px] font-medium uppercase tracking-wider bg-white/10 backdrop-blur-sm border border-white/20 rounded-full text-white hover:bg-white/30 shadow-[0_0_10px_rgba(255,255,255,0.2)] whitespace-nowrap z-30">Projects</button>
 </div>
 </main>
@@ -234,9 +230,31 @@
     let gustDuration = 0;
     let nextGustTime = Math.random() * 200 + 200;
     
+    // Projection variables for SVG aspect ratio handling
+    let svgScaleX, svgScaleY, svgOffsetX, svgOffsetY;
+
     function resize() {
       width = canvas.width = birdsCanvas.width = window.innerWidth;
       height = canvas.height = birdsCanvas.height = window.innerHeight;
+      
+      // Calculate effective SVG projection area considering xMidYMax slice
+      const svgAspect = 1000 / 800;
+      const containerHeight = height * 0.8;
+      const containerAspect = width / containerHeight;
+      
+      if (containerAspect > svgAspect) {
+        // Wider than SVG aspect: scales to fit width, crops top/bottom
+        svgScaleX = width / 1000;
+        svgScaleY = svgScaleX;
+        svgOffsetX = 0;
+        svgOffsetY = height - (800 * svgScaleY);
+      } else {
+        // Taller than SVG aspect (like mobile portrait): scales to fit height, crops left/right
+        svgScaleY = containerHeight / 800;
+        svgScaleX = svgScaleY;
+        svgOffsetX = (width - (1000 * svgScaleX)) / 2;
+        svgOffsetY = height - containerHeight;
+      }
     }
     
     window.addEventListener('resize', resize);
@@ -249,16 +267,16 @@
       
       reset() {
         this.active = true;
-        // Spawn from the mountain's right lit slope (SVG coords: x:460-720, y:180-400 approx)
-        const svgX = 460 + Math.random() * 260;
+        // Spawn from the mountain's right lit slope (SVG coords: x:400-700, y:180-400 approx based on new wider geom)
+        const svgX = 400 + Math.random() * 300;
         // Interpolate rough slope height
-        const baseSvgY = 180 + ((svgX - 460) / 260) * 220;
+        const baseSvgY = 180 + ((svgX - 400) / 300) * 220;
         // Add random spread mainly below the ridge to simulate blowing off the face
         const svgY = baseSvgY + Math.random() * 100; // Increased spread
         
-        // Map SVG coords (0-1000 w, 0-800 h taking bottom 80% screen) to canvas coords
-        this.x = width * (svgX / 1000);
-        this.y = height * 0.2 + (svgY / 800) * (height * 0.8);
+        // Map SVG coords using dynamic projection
+        this.x = svgOffsetX + (svgX * svgScaleX);
+        this.y = svgOffsetY + (svgY * svgScaleY);
         
         // Make particles tiny for grainy snow-mist look
         this.size = Math.random() * 0.8 + 0.2; 
