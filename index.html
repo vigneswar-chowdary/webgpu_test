@@ -251,7 +251,6 @@
     window.addEventListener('resize', resize);
     resize();
 
-    // Refined Mist Logic
     class MistParticle {
       constructor() {
         this.active = false;
@@ -260,24 +259,26 @@
       reset(clusterOriginX, clusterOriginY, isClusterMember = false) {
         this.active = true;
         
-        // Origin logic: White snowy patch right mouth
+        // Origin: Height 0.2 to 0.8 of the white snowy patch on the right face
+        // The white snowy patch roughly spans X: 1000 to 1200, Y: 270 to 380 in SVG space
         const spawnXRange = [1000, 1100];
         const randomX = spawnXRange[0] + Math.random() * (spawnXRange[1] - spawnXRange[0]);
-        const randomY = 180 + (randomX - 800) * 0.5;
+        
+        // Define vertical span based on requested 0.2 to 0.8 height of that face section
+        const faceTopY = 180 + (randomX - 800) * 0.5; // Top ridge line
+        const faceBottomY = 450; // Approximated bottom of lit face section
+        const spanHeight = faceBottomY - faceTopY;
+        const randomY = faceTopY + (spanHeight * (0.2 + Math.random() * 0.6));
 
         const baseViewX = isClusterMember ? clusterOriginX : randomX;
         const baseViewY = isClusterMember ? clusterOriginY : randomY;
 
-        // Dynamic Mist Scaling: Cluster radius and particle size increase with wind intensity
-        const windScaleFactor = (windIntensity / MAX_WIND_VAL);
-        const spreadX = isGusting ? (Math.random() - 0.5) * (45 * windScaleFactor) : (Math.random() - 0.5) * 15;
-        const spreadY = isGusting ? (Math.random() - 0.5) * (25 * windScaleFactor) : (Math.random() - 0.5) * 10;
-
-        this.x = svgOffsetX + (baseViewX * svgScaleX) + spreadX;
-        this.y = svgOffsetY + (baseViewY * svgScaleY) + spreadY;
+        this.spawnX = svgOffsetX + (baseViewX * svgScaleX);
+        this.x = this.spawnX + (isGusting ? (Math.random() - 0.5) * 45 : (Math.random() - 0.5) * 15);
+        this.y = svgOffsetY + (baseViewY * svgScaleY) + (isGusting ? (Math.random() - 0.5) * 25 : (Math.random() - 0.5) * 10);
         
-        // Voluminous Scaling: Base particle size scales with wind
-        this.size = (Math.random() * 2.5 + 0.5) * (1 + (windScaleFactor - 0.5)); 
+        this.size = (Math.random() * 2.5 + 0.5); 
+        // Horizontal mist speed restored to previous randomized state (no longer halved)
         this.baseSpeed = (1.8 + Math.random() * 3.0); 
         this.life = 0;
         this.maxLife = Math.random() * 1.8 + 1.2;
@@ -288,6 +289,8 @@
 
         const colors = ['rgba(255, 235, 230, ', 'rgba(255, 255, 255, ', 'rgba(240, 240, 255, '];
         this.baseColor = colors[Math.floor(Math.random() * colors.length)];
+        
+        this.gravityAccum = 0;
       }
       
       update() {
@@ -296,27 +299,30 @@
         const lifeFactor = this.life / this.maxLife;
         let vx, vy;
 
+        // Progressive Gravity Logic:
+        // Gravity increases as the particle moves right from its spawn point.
+        // Max value is exactly 1/2 of the gravity value used in Screen 13 (0.12 -> 0.06)
+        const distFromSpawn = Math.max(0, this.x - this.spawnX);
+        const gravityForce = (distFromSpawn / width) * 0.06; 
+        this.gravityAccum += gravityForce;
+
         if (lifeFactor < this.transitionPoint) {
-          // Trajectory 1: Upward 9-11 degrees
           const liftAngle = -(9 + Math.random() * 2) * (Math.PI / 180);
           vx = Math.cos(liftAngle) * this.baseSpeed * windIntensity;
           vy = Math.sin(liftAngle) * this.baseSpeed * windIntensity;
         } else {
-          // Wind-Aligned Trajectory: 
-          // Trajectory 2: Settle and fall along rightward slopes 9-14 degrees
-          // horizontal movement strictly left-to-right (cos(angle) is always positive in this range)
+          // Downward trajectory influenced by progressive gravity
           const fallAngle = (9 + Math.random() * 5) * (Math.PI / 180);
           vx = Math.abs(Math.cos(fallAngle)) * (this.baseSpeed * 0.9) * windIntensity;
           vy = Math.abs(Math.sin(fallAngle)) * (this.baseSpeed * 0.9) * windIntensity;
           
-          // Slight chaotic drift, but biased heavily by wind to prevent "pushing back"
-          vx += Math.abs(Math.cos(this.angle)) * 0.15;
-          vy += Math.sin(this.angle) * 0.15;
+          vx += Math.abs(Math.cos(this.angle)) * 0.1;
+          vy += Math.sin(this.angle) * 0.1;
         }
 
         this.angle += this.angleSpeed;
         this.x += vx;
-        this.y += vy;
+        this.y += vy + this.gravityAccum;
         this.life += 0.008;
         
         if (this.life >= this.maxLife || this.x > width + 50 || this.y > height + 50) {
@@ -426,12 +432,10 @@
       
       windIntensity += (targetWind - windIntensity) * 0.03;
       
-      // Spawning Logic
-      let spawnQuota = Math.floor(windIntensity * 18); // Slightly higher quota for more volume
+      let spawnQuota = Math.floor(windIntensity * 20); 
       
       if (isGusting && Math.random() < 0.4) {
-          const windVolumeMultiplier = (windIntensity / MAX_WIND_VAL) * 1.5;
-          const clusterSize = Math.floor((15 + Math.floor(Math.random() * 25)) * windVolumeMultiplier);
+          const clusterSize = Math.floor(15 + Math.random() * 25);
           const cX = 1000 + Math.random() * 100;
           const cY = 180 + (cX - 800) * 0.5;
           let count = 0;
