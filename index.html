@@ -69,8 +69,10 @@
 <body class="w-full h-screen relative font-sans text-white antialiased">
 <!-- BEGIN: Environment Background -->
 <div class="absolute inset-0 z-0 pointer-events-none" data-purpose="scene-container">
+<!-- Star Constellation Canvas -->
+<canvas class="absolute inset-0 w-full h-full z-[5]" id="starCanvas"></canvas>
 <!-- Mountain Geometry -->
-<svg class="absolute bottom-0 w-full h-[90%] object-cover object-bottom" data-purpose="mountain-svg" preserveaspectratio="xMidYMax slice" viewbox="0 0 1600 800">
+<svg class="absolute bottom-0 w-full h-[90%] object-cover object-bottom" data-purpose="mountain-svg" id="mountainSvg" preserveaspectratio="xMidYMax slice" viewbox="0 0 1600 800">
 <!-- Deep Background Shadows -->
 <polygon fill="#38345c" points="0,800 0,550 200,480 400,320 600,400 800,200 1100,450 1400,550 1600,650 1600,800"></polygon>
 <!-- Main Peak Shadow Side (Left) -->
@@ -170,7 +172,7 @@
 </footer>
 </div>
 <!-- END: UI Overlay -->
-<!-- BEGIN: Mist & Environment Simulation -->
+<!-- BEGIN: Simulation Scripts -->
 <script data-purpose="mist-simulation">
   (function() {
     const canvas = document.getElementById('mistCanvas');
@@ -178,6 +180,9 @@
     
     const birdsCanvas = document.getElementById('birdsCanvas');
     const birdsCtx = birdsCanvas.getContext('2d', { alpha: true });
+
+    const starCanvas = document.getElementById('starCanvas');
+    const starCtx = starCanvas.getContext('2d');
     
     const landmarkRegion = document.getElementById('landmarkRegion');
     const cabinNode = document.getElementById('cabinNode');
@@ -187,10 +192,11 @@
     let width, height;
     let particles = [];
     let birds = [];
+    let stars = [];
     let globalTime = 0;
     
     const BIRD_AVG_SPEED = 2.0; 
-    const MAX_PARTICLE_SPEED = BIRD_AVG_SPEED / 2.0; // 1.0 (Exactly 1/2 bird speed)
+    const MAX_PARTICLE_SPEED = BIRD_AVG_SPEED / 2.0; 
     const MAX_WIND_VAL = 1.0;
     const MIN_WIND_VAL = 0.5;
     
@@ -203,9 +209,24 @@
     
     let svgScaleX, svgScaleY, svgOffsetX, svgOffsetY;
 
+    // Constellation parameters
+    let wordPoints = [];
+    let animationState = 'steady'; // steady, twinkling, converging, holding, dispersing, waiting
+    let animationTimer = 0;
+    let currentWaitingLimit = 600; // Default 10s
+
+    const STATE_TIMES = {
+      steady: 120,      // Start as steady points
+      twinkling: 120,   // Begin to twinkle
+      converging: 150,  // Move into name
+      holding: 240,     // Stay as name
+      dispersing: 150,  // Back to sky
+      waiting: 600      // Wait for next cycle
+    };
+
     function resize() {
-      width = canvas.width = birdsCanvas.width = window.innerWidth;
-      height = canvas.height = birdsCanvas.height = window.innerHeight;
+      width = canvas.width = birdsCanvas.width = starCanvas.width = window.innerWidth;
+      height = canvas.height = birdsCanvas.height = starCanvas.height = window.innerHeight;
       
       const SVG_WIDTH = 1600;
       const SVG_HEIGHT = 800;
@@ -221,6 +242,187 @@
       svgOffsetY = height - (SVG_HEIGHT * scale);
 
       groundElements();
+      generateWordPoints();
+      initStars();
+    }
+
+    // Boundary check for sky spawning
+    function getMountainBoundary(screenX) {
+      const svgX = (screenX - svgOffsetX) / svgScaleX;
+      let peakY = 800;
+
+      if (svgX < 350) peakY = Math.min(peakY, 650 - (svgX/350)*50);
+      else if (svgX < 600) peakY = Math.min(peakY, 600);
+      
+      if (svgX >= 100 && svgX <= 800) {
+        const t = (svgX - 100) / 700;
+        peakY = Math.min(peakY, 550 - t*370);
+      } else if (svgX > 800 && svgX <= 1600) {
+        const t = (svgX - 800) / 800;
+        peakY = Math.min(peakY, 180 + t*620);
+      }
+
+      if (svgX >= 1250) {
+        const t = (svgX - 1250) / 350;
+        peakY = Math.min(peakY, 320 + t*330);
+      }
+
+      return svgOffsetY + (peakY * svgScaleY);
+    }
+
+    function generateWordPoints() {
+      const offscreenCanvas = document.createElement('canvas');
+      const offscreenCtx = offscreenCanvas.getContext('2d');
+      offscreenCanvas.width = width;
+      offscreenCanvas.height = height;
+      
+      const fontSize = Math.min(width * 0.1, 80);
+      offscreenCtx.font = `bold ${fontSize}px "Playfair Display", serif`;
+      offscreenCtx.textAlign = 'center';
+      offscreenCtx.textBaseline = 'middle';
+      offscreenCtx.fillText('VIGNESWAR', width / 2, height * 0.25);
+      
+      const imageData = offscreenCtx.getImageData(0, 0, width, height).data;
+      wordPoints = [];
+      const step = Math.max(2, Math.floor(fontSize / 20)); 
+      
+      for (let y = 0; y < height; y += step) {
+        for (let x = 0; x < width; x += step) {
+          const alpha = imageData[(y * width + x) * 4 + 3];
+          if (alpha > 128) {
+            wordPoints.push({ x, y });
+          }
+        }
+      }
+    }
+
+    function initStars() {
+      stars = [];
+      const starCount = Math.max(wordPoints.length, 400);
+      for (let i = 0; i < starCount; i++) {
+        let sx, sy, mY;
+        let attempts = 0;
+        do {
+          sx = Math.random() * width;
+          sy = Math.random() * height;
+          mY = getMountainBoundary(sx);
+          attempts++;
+        } while (sy > mY - 15 && attempts < 15);
+
+        stars.push({
+          x: sx,
+          y: sy,
+          targetX: 0,
+          targetY: 0,
+          originX: sx,
+          originY: sy,
+          size: Math.random() * 1.5 + 0.5,
+          opacity: 0.5 + Math.random() * 0.5,
+          twinkleSpeed: 0.03 + Math.random() * 0.07,
+          isTwinkler: Math.random() > 0.4,
+          active: true
+        });
+      }
+      
+      for (let i = 0; i < stars.length; i++) {
+        if (i < wordPoints.length) {
+          stars[i].targetX = wordPoints[i].x;
+          stars[i].targetY = wordPoints[i].y;
+          stars[i].hasTarget = true;
+        } else {
+          stars[i].hasTarget = false;
+        }
+      }
+    }
+
+    function updateStars() {
+      animationTimer++;
+      let limit = STATE_TIMES[animationState];
+      if (animationState === 'waiting') limit = currentWaitingLimit;
+      
+      if (animationTimer >= limit) {
+        animationTimer = 0;
+        switch(animationState) {
+          case 'steady': animationState = 'twinkling'; break;
+          case 'twinkling': animationState = 'converging'; break;
+          case 'converging': animationState = 'holding'; break;
+          case 'holding': animationState = 'dispersing'; break;
+          case 'dispersing': 
+            animationState = 'waiting'; 
+            currentWaitingLimit = 600 + Math.floor(Math.random() * 300); // 10-15s
+            break;
+          case 'waiting': animationState = 'steady'; resetStarPositions(); break;
+        }
+      }
+
+      const progress = animationTimer / limit;
+
+      stars.forEach(s => {
+        // Handle Twinkling Logic
+        if (animationState === 'twinkling' || animationState === 'converging' || animationState === 'holding') {
+           if (s.isTwinkler) {
+             const tProgress = animationState === 'twinkling' ? progress : 1.0;
+             const baseOp = 0.6;
+             const varOp = Math.abs(Math.sin(Date.now() * s.twinkleSpeed * 0.05)) * 0.4;
+             s.opacity = baseOp + (varOp * tProgress);
+           } else {
+             s.opacity = 0.8;
+           }
+        } else {
+           // Steady or waiting states
+           s.opacity = 0.7;
+        }
+
+        // Handle Movement Logic
+        if (animationState === 'converging' && s.hasTarget) {
+          s.x += (s.targetX - s.x) * 0.04;
+          s.y += (s.targetY - s.y) * 0.04;
+        } else if (animationState === 'dispersing' && s.hasTarget) {
+          s.x += (s.originX - s.x) * 0.03;
+          s.y += (s.originY - s.y) * 0.03;
+        } else if (animationState === 'steady' || animationState === 'waiting') {
+           // Very slow background drift only if sky allows
+           const driftX = Math.sin(Date.now() * 0.0005 + s.size) * 0.02;
+           const testX = s.x + driftX;
+           const mY = getMountainBoundary(testX);
+           if (s.y < mY - 5) {
+             s.x = testX;
+             s.originX = s.x; // Update origin for dispersal target
+           }
+        }
+      });
+    }
+
+    function resetStarPositions() {
+      stars.forEach(s => {
+        let sx, sy, mY;
+        let attempts = 0;
+        do {
+          sx = Math.random() * width;
+          sy = Math.random() * height;
+          mY = getMountainBoundary(sx);
+          attempts++;
+        } while (sy > mY - 15 && attempts < 15);
+        
+        s.originX = sx;
+        s.originY = sy;
+        if (animationState === 'steady') {
+            s.x = sx;
+            s.y = sy;
+        }
+      });
+    }
+
+    function drawStars() {
+      starCtx.clearRect(0, 0, width, height);
+      stars.forEach(s => {
+        starCtx.globalAlpha = s.opacity;
+        starCtx.fillStyle = '#fff';
+        starCtx.beginPath();
+        starCtx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+        starCtx.fill();
+      });
+      starCtx.globalAlpha = 1;
     }
 
     function getYOnForest(xPercent) {
@@ -237,7 +439,6 @@
       
       const forestHeight = height * 0.3;
       const rootedYInViewbox = yInViewbox + 35; 
-      
       const yPixelsFromBottom = (250 - rootedYInViewbox) * (forestHeight / 250);
       return yPixelsFromBottom;
     }
@@ -252,7 +453,6 @@
     window.addEventListener('resize', resize);
     resize();
 
-    // Refined Mist Logic
     class MistParticle {
       constructor() {
         this.active = false;
@@ -260,65 +460,47 @@
       
       reset(clusterOriginX, clusterOriginY, isClusterMember = false) {
         this.active = true;
-        
-        // Origin logic: White snowy patch right mouth
         const spawnXRange = [1000, 1100];
         const randomX = spawnXRange[0] + Math.random() * (spawnXRange[1] - spawnXRange[0]);
         const randomY = 180 + (randomX - 800) * 0.5;
-
         const baseViewX = isClusterMember ? clusterOriginX : randomX;
         const baseViewY = isClusterMember ? clusterOriginY : randomY;
-
         const windScaleFactor = (windIntensity / MAX_WIND_VAL);
         const spreadX = isGusting ? (Math.random() - 0.5) * (45 * windScaleFactor) : (Math.random() - 0.5) * 15;
         const spreadY = isGusting ? (Math.random() - 0.5) * (25 * windScaleFactor) : (Math.random() - 0.5) * 10;
-
         this.x = svgOffsetX + (baseViewX * svgScaleX) + spreadX;
         this.y = svgOffsetY + (baseViewY * svgScaleY) + spreadY;
-        
         this.size = (Math.random() * 2.5 + 0.5) * (1 + (windScaleFactor - 0.5)); 
-        // 2. Cap the maximum speed of the misty particles at exactly 1/2 the speed of the birds (MAX_PARTICLE_SPEED)
-        // 3. Remove any minimum speed requirement
         this.baseSpeed = Math.random() * MAX_PARTICLE_SPEED; 
         this.life = 0;
         this.maxLife = Math.random() * 1.8 + 1.2;
         this.transitionPoint = 0.15 + Math.random() * 0.1; 
-        
         this.angle = Math.random() * Math.PI * 2;
         this.angleSpeed = (Math.random() - 0.5) * 0.1;
-        
-        // 1. Randomize the fall gradient for mist particles between 9 and 18 degrees.
         this.customFallAngle = (9 + Math.random() * 9) * (Math.PI / 180);
-
         const colors = ['rgba(255, 235, 230, ', 'rgba(255, 255, 255, ', 'rgba(240, 240, 255, '];
         this.baseColor = colors[Math.floor(Math.random() * colors.length)];
       }
       
       update() {
         if (!this.active) return;
-        
         const lifeFactor = this.life / this.maxLife;
         let vx, vy;
-
         if (lifeFactor < this.transitionPoint) {
           const liftAngle = -(9 + Math.random() * 2) * (Math.PI / 180);
           vx = Math.cos(liftAngle) * this.baseSpeed * windIntensity;
           vy = Math.sin(liftAngle) * this.baseSpeed * windIntensity;
         } else {
-          // 1. Apply the randomized fall gradient (9-18 degrees)
           const fallAngle = this.customFallAngle;
           vx = Math.abs(Math.cos(fallAngle)) * (this.baseSpeed * 0.9) * windIntensity;
           vy = Math.abs(Math.sin(fallAngle)) * (this.baseSpeed * 0.9) * windIntensity;
-          
           vx += Math.abs(Math.cos(this.angle)) * 0.15;
           vy += Math.sin(this.angle) * 0.15;
         }
-
         this.angle += this.angleSpeed;
         this.x += vx;
         this.y += vy;
         this.life += 0.008;
-        
         if (this.life >= this.maxLife || this.x > width + 50 || this.y > height + 50) {
           this.active = false;
         }
@@ -330,7 +512,6 @@
         if (this.life < 0.15) opacity = (this.life / 0.15) * 0.45;
         else if (this.life > this.maxLife - 0.6) opacity = ((this.maxLife - this.life) / 0.6) * 0.45;
         if (opacity < 0) opacity = 0;
-        
         ctx.fillStyle = this.baseColor + opacity + ')';
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
@@ -375,7 +556,7 @@
       }
     }
     
-    const MAX_PARTICLES = 2500;
+    const MAX_PARTICLES = 2000;
     for (let i = 0; i < MAX_PARTICLES; i++) {
       particles.push(new MistParticle());
     }
@@ -406,6 +587,9 @@
       
       globalTime += 0.01;
       frameCount++;
+
+      updateStars();
+      drawStars();
       
       if (frameCount >= nextGustTime) {
           isGusting = true;
@@ -469,5 +653,5 @@
     animate();
   })();
 </script>
-<!-- END: Mist Simulation Script -->
+<!-- END: Simulation Scripts -->
 </body></html>
