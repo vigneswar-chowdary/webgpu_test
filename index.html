@@ -69,7 +69,7 @@
 <body class="w-full h-screen relative font-sans text-white antialiased">
 <!-- BEGIN: Environment Background -->
 <div class="absolute inset-0 z-0 pointer-events-none" data-purpose="scene-container">
-<!-- Mountain Geometry - Wide expansive version -->
+<!-- Mountain Geometry - Enhanced to match IMAGE_8 with expansive right slopes -->
 <svg class="absolute bottom-0 w-full h-[90%] object-cover object-bottom" data-purpose="mountain-svg" preserveaspectratio="xMidYMax slice" viewbox="0 0 1600 800">
 <!-- Deep Background Shadows -->
 <polygon fill="#38345c" points="0,800 0,550 200,480 400,320 600,400 800,200 1100,450 1400,550 1600,650 1600,800"></polygon>
@@ -77,15 +77,15 @@
 <polygon fill="#46426b" points="100,800 350,520 550,350 800,180 1000,450 950,800"></polygon>
 <polygon fill="#585282" points="250,800 500,580 650,450 820,250 950,450"></polygon>
 <!-- Main Peak Lit Side (Right) & Alpenglow -->
-<polygon fill="#b85f6c" points="800,180 1000,250 1250,450 1450,550 1600,800 950,800 1000,450"></polygon>
-<polygon fill="#f26f63" points="800,180 950,220 1150,350 1250,320 1450,420 1600,500 1300,550 1000,450"></polygon>
+<polygon fill="#b85f6c" points="800,180 1000,250 1250,450 1600,800 950,800 1000,450"></polygon>
+<polygon fill="#f26f63" points="800,180 950,220 1150,350 1250,320 1350,450 1100,500 1000,450"></polygon>
 <!-- Brightest Highlights (Peak and Upper Right Edge) - Snow Capped -->
 <polygon fill="#fff" points="800,180 850,210 900,215 1000,270 1050,290 1200,380 1120,390 950,310 900,250"></polygon>
 <polygon fill="#ffece6" points="800,180 840,185 880,195 835,205"></polygon>
-<!-- Secondary Sloped Face (Right) -->
-<polygon fill="#e5766e" points="1250,320 1450,280 1550,420 1600,500 1600,800 1450,550"></polygon>
-<polygon fill="#ffa384" points="1450,280 1500,310 1580,380 1600,450 1550,480 1500,420"></polygon>
-<polygon fill="#fff" points="1450,280 1480,305 1520,315 1500,340 1475,325"></polygon>
+<!-- Secondary Sloped Face (Right) - EXTENDED for more magnanimous look -->
+<polygon fill="#e5766e" points="1250,320 1400,400 1550,450 1600,550 1600,800 1350,550"></polygon>
+<polygon fill="#ffa384" points="1400,400 1500,420 1600,500 1600,550 1550,530 1450,480"></polygon>
+<polygon fill="#fff" points="1400,400 1430,425 1470,435 1450,460 1425,445"></polygon>
 <!-- Lower Left Ranges -->
 <polygon fill="#5a548c" points="0,800 0,650 150,600 350,700 500,650 650,750"></polygon>
 <polygon fill="#8c6c94" points="0,650 100,630 200,680 300,640 150,600"></polygon>
@@ -251,10 +251,6 @@
       }
       
       const forestHeight = height * 0.3;
-      // Adjusted positioning: The viewbox path sits around y=180-220. 
-      // Base line is y=250. 
-      // To "nestle among roots", we want to be much closer to the ground plane (y=250 in SVG coords).
-      // We offset the yInViewbox result by shifting it closer to 240-245 to be at the "base" of the trees.
       const rootedYInViewbox = yInViewbox + 35; 
       
       const yPixelsFromBottom = (250 - rootedYInViewbox) * (forestHeight / 250);
@@ -263,8 +259,6 @@
 
     function groundElements() {
       if (!cabinNode || !trekkerNode || !flagNode) return;
-      
-      // Since we adjusted getYOnForest to be rooted, they will sit lower.
       cabinNode.style.bottom = getYOnForest(0.15) + 'px';
       trekkerNode.style.bottom = getYOnForest(0.50) + 'px';
       flagNode.style.bottom = getYOnForest(0.85) + 'px';
@@ -280,6 +274,7 @@
       
       reset() {
         this.active = true;
+        // Keep mist origin at the main peak right face as requested
         const svgX = 950 + Math.random() * 200;
         const svgY = 220 + Math.random() * 130;
         
