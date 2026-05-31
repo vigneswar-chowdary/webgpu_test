@@ -69,8 +69,8 @@
 <body class="w-full h-screen relative font-sans text-white antialiased">
 <!-- BEGIN: Environment Background -->
 <div class="absolute inset-0 z-0 pointer-events-none" data-purpose="scene-container">
-<!-- Mountain Geometry - Widened to 1200 units and better centered -->
-<svg class="absolute bottom-0 w-full h-[85%] object-cover object-bottom" data-purpose="mountain-svg" preserveaspectratio="xMidYMax meet" viewbox="0 0 1200 800">
+<!-- Mountain Geometry - Updated preserveAspectRatio to xMidYMax meet for better containment -->
+<svg class="absolute bottom-0 w-full h-[85%] object-contain object-bottom" data-purpose="mountain-svg" preserveaspectratio="xMidYMax meet" viewbox="0 0 1200 800">
 <!-- Deep Background Shadows -->
 <polygon fill="#38345c" points="0,800 0,550 150,480 300,320 450,400 600,200 850,450 1050,550 1200,650 1200,800"></polygon>
 <!-- Main Peak Shadow Side (Left) -->
@@ -156,15 +156,16 @@
 </header>
 <!-- Main Area -->
 <main class="flex-grow relative pointer-events-none w-full h-full">
-<!-- Landmark Container with updated spacing: Cabin (10%), Trekker (50%), Flag (90%) -->
-<div class="absolute bottom-[8%] left-0 w-full px-[10%] flex justify-between items-end">
+<!-- Landmark Container with updated logic to anchor nodes within the contained mountain region -->
+<div class="absolute bottom-[12%] left-1/2 -translate-x-1/2 w-full max-w-[1200px] h-0 pointer-events-none" id="landmarkRegion">
+<div class="absolute bottom-0 w-full px-[5%] flex justify-between items-end pointer-events-none">
 <!-- Cabin Node -->
 <div class="group relative flex flex-col items-center justify-end pointer-events-auto cursor-pointer pb-2 w-[80px] h-[80px]">
 <div class="absolute inset-0 bg-white/20 blur-xl rounded-full pointer-events-none"></div>
 <img alt="Cabin" class="w-full h-full object-contain filter drop-shadow-md opacity-80 group-hover:opacity-100 transition-opacity relative z-10" src="https://lh3.googleusercontent.com/aida/ADBb0uhdjtopNrTP5LtpruW22kxQO4BcF7jq_f5HycBa9wODRX62P4wlwStq_kcBV10gDuQ3MYG8NRKmiVcshpV8UY_XJV_aysCCXed3zgBZhtyu-N4kFWLueKiIfulTWG0m6dOMAaiy4ukTEShtRZMY7HIyK3CQbsWmqyYzkyhQDD6Tw7FFlj3Anzw4zwZ5ecC-EleG8TFboQiVMNu0lEyPDt5cT2C161F8_rokdbXQL2e3i7SgxtYb32d5nrc"/>
 <button class="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity px-3 py-1 text-[10px] font-medium uppercase tracking-wider bg-white/10 backdrop-blur-sm border border-white/20 rounded-full text-white hover:bg-white/30 shadow-[0_0_10px_rgba(255,255,255,0.2)] whitespace-nowrap z-30">Home</button>
 </div>
-<!-- Trekker Node - Centered relative to screen -->
+<!-- Trekker Node - Centered relative to region -->
 <div class="group relative flex flex-col items-center justify-end pointer-events-auto cursor-pointer pb-2 w-[56px] h-[56px]">
 <!-- Torch Light -->
 <div class="absolute w-24 h-10 bg-gradient-to-r from-orange-400/50 to-transparent rounded-full blur-md opacity-90 animate-pulse pointer-events-none" style="left: 75%; top: 35%; transform-origin: left center; transform: rotate(15deg);"></div>
@@ -183,6 +184,7 @@
 <button class="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity px-3 py-1 text-[10px] font-medium uppercase tracking-wider bg-white/10 backdrop-blur-sm border border-white/20 rounded-full text-white hover:bg-white/30 shadow-[0_0_10px_rgba(255,255,255,0.2)] whitespace-nowrap z-30">Projects</button>
 </div>
 </div>
+</div>
 </main>
 <footer class="w-full px-8 py-6 flex justify-between items-center text-xs text-gray-400 font-light pointer-events-auto">
 <span></span>
@@ -199,6 +201,8 @@
     const birdsCanvas = document.getElementById('birdsCanvas');
     const birdsCtx = birdsCanvas.getContext('2d', { alpha: true });
     
+    const landmarkRegion = document.getElementById('landmarkRegion');
+    
     let width, height;
     let particles = [];
     let birds = [];
@@ -214,7 +218,7 @@
     let gustDuration = 0;
     let nextGustTime = Math.random() * 200 + 200;
     
-    // Updated Projection Logic: Widen to 1200 and ensure full width containment
+    // Robust Projection Logic: Implement 'contain' math to ensure geometry is fully visible
     let svgScaleX, svgScaleY, svgOffsetX, svgOffsetY;
 
     function resize() {
@@ -223,15 +227,28 @@
       
       const SVG_WIDTH = 1200;
       const SVG_HEIGHT = 800;
-      const svgAspect = SVG_WIDTH / SVG_HEIGHT;
+      const mountainHeightRatio = 0.85; // Matches h-[85%]
+      const effectiveHeight = height * mountainHeightRatio;
       
-      // Robust matrix: Scale to fit width primarily, ensuring mountain base is always fully visible
-      svgScaleX = width / SVG_WIDTH;
-      svgScaleY = svgScaleX; 
+      // Calculate "contain" scale: the smaller of the two dimensions' fit factors
+      const scaleFitWidth = width / SVG_WIDTH;
+      const scaleFitHeight = effectiveHeight / SVG_HEIGHT;
       
-      svgOffsetX = 0;
-      // Anchor to bottom
-      svgOffsetY = height - (SVG_HEIGHT * svgScaleY);
+      // Use the smaller factor to ensure full containment
+      const scale = Math.min(scaleFitWidth, scaleFitHeight);
+      
+      svgScaleX = svgScaleY = scale;
+      
+      // Calculate offsets for centering
+      svgOffsetX = (width - (SVG_WIDTH * scale)) / 2;
+      svgOffsetY = height - (SVG_HEIGHT * scale);
+
+      // Adjust the landmarks container to match the projected mountain width
+      if(landmarkRegion) {
+          landmarkRegion.style.width = (SVG_WIDTH * scale) + 'px';
+          // Slightly offset landmarks vertically to track the mountain base if needed
+          // Currently kept at static bottom for simplicity
+      }
     }
     
     window.addEventListener('resize', resize);
@@ -244,7 +261,7 @@
       
       reset() {
         this.active = true;
-        // Adjusted spawn range for widened mountain
+        // Spawn centered on the primary peak area
         const svgX = 500 + Math.random() * 400;
         const baseSvgY = 180 + ((svgX - 600) / 400) * 250;
         const svgY = baseSvgY + Math.random() * 120;
