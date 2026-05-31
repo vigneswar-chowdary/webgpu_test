@@ -251,15 +251,20 @@
       }
       
       const forestHeight = height * 0.3;
-      const yPixelsFromBottom = (250 - yInViewbox) * (forestHeight / 250);
+      // Adjusted positioning: The viewbox path sits around y=180-220. 
+      // Base line is y=250. 
+      // To "nestle among roots", we want to be much closer to the ground plane (y=250 in SVG coords).
+      // We offset the yInViewbox result by shifting it closer to 240-245 to be at the "base" of the trees.
+      const rootedYInViewbox = yInViewbox + 35; 
+      
+      const yPixelsFromBottom = (250 - rootedYInViewbox) * (forestHeight / 250);
       return yPixelsFromBottom;
     }
 
     function groundElements() {
       if (!cabinNode || !trekkerNode || !flagNode) return;
       
-      // We position them relative to bottom of container to sit exactly on the line
-      // Since the forest starts at height * 0.3 from bottom:
+      // Since we adjusted getYOnForest to be rooted, they will sit lower.
       cabinNode.style.bottom = getYOnForest(0.15) + 'px';
       trekkerNode.style.bottom = getYOnForest(0.50) + 'px';
       flagNode.style.bottom = getYOnForest(0.85) + 'px';
