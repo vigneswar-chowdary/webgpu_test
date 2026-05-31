@@ -3,419 +3,251 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fuji Animated Sunrise Dashboard</title>
+    <title>Kanchenjunga Sunset - WebGPU</title>
     <style>
-        :root {
-            --bg-color: #060913;
-            --text-color: #f3f4f6;
-            --accent-color: #f97316;
-            --glass-bg: rgba(15, 23, 42, 0.45);
-            --glass-border: rgba(255, 255, 255, 0.06);
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #1a1a2e;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-color); overflow: hidden; min-height: 100vh; }
-        
         canvas {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            z-index: 1;
+            width: 100%;
+            height: 100%;
+            display: block;
         }
-
-        /* --- 🕊️ CSS Cartoon Bird Animation Framework --- */
-        .bird-group {
-            position: fixed;
-            top: 20vh;
-            left: -15vw;
-            width: 180px;
-            height: 120px;
-            z-index: 5; 
-            pointer-events: none;
+        #error-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff4a4a;
+            font-family: sans-serif;
+            font-size: 1.2rem;
+            text-align: center;
             display: none;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 8px;
         }
-
-        .bird {
-            position: absolute;
-            width: 16px;
-            height: 8px;
-            opacity: 0.75;
-        }
-        .bird::before, .bird::after {
-            content: '';
-            position: absolute;
-            top: 0; width: 8px; height: 8px;
-            border-top: 2.5px solid #0a1833;
-            border-radius: 50% 50% 0 0;
-        }
-        .bird::before { left: 0; border-left: 2.5px solid #0a1833; transform-origin: right bottom; animation: flapLeft 0.4s ease-in-out infinite alternate; }
-        .bird::after { right: 0; border-right: 2.5px solid #0a1833; transform-origin: left bottom; animation: flapRight 0.4s ease-in-out infinite alternate; }
-
-        .b1 { top: 20px; left: 10px; transform: scale(0.8); }
-        .b2 { top: 45px; left: 60px; transform: scale(1.0); }
-        .b3 { top: 15px; left: 110px; transform: scale(0.7); }
-        .b4 { top: 60px; left: 140px; transform: scale(0.9); }
-
-        @keyframes flapLeft  { 0% { transform: rotate(25deg); } 100% { transform: rotate(-35deg); } }
-        @keyframes flapRight { 0% { transform: rotate(-25deg); } 100% { transform: rotate(35deg); } }
-
-        @keyframes flyAcross {
-            0%   { left: -15vw; }
-            100% { left: 115vw; }
-        }
-
-        /* UI Layers */
-        nav {
-            position: fixed;
-            top: 0; left: 0; width: 100%;
-            padding: 30px 50px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 10;
-        }
-        .logo { font-weight: 800; font-size: 1.4rem; cursor: pointer; letter-spacing: 2px; color: #fff; }
-        .nav-links { display: flex; gap: 40px; list-style: none; }
-        .nav-links a { 
-            color: #9ca3af; text-decoration: none; font-size: 0.95rem; font-weight: 600;
-            transition: 0.3s; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
-        }
-        .nav-links a:hover, .nav-links a.active { color: var(--accent-color); text-shadow: 0 0 15px rgba(249,115,22,0.6); }
-
-        .container {
-            position: relative;
-            z-index: 2;
-            max-width: 1400px;
-            margin-left: auto;
-            padding: 140px 50px 80px 0;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            min-height: 100vh;
-            pointer-events: none;
-        }
-        .sidebar { pointer-events: auto; width: 340px; }
-
-        .card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-        }
-
-        h2 { font-size: 1.1rem; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: #fff; font-weight: 700; }
-        p { line-height: 1.5; color: #9ca3af; font-size: 0.85rem; }
-        .learn-more { color: #d1d5db; font-size: 0.8rem; text-decoration: none; display: block; margin-top: 12px; font-weight: 600; cursor: pointer;}
     </style>
 </head>
 <body>
 
-    <canvas id="gpuCanvas"></canvas>
-
-    <div class="bird-group" id="birdSwarm">
-        <div class="bird b1"></div>
-        <div class="bird b2"></div>
-        <div class="bird b3"></div>
-        <div class="bird b4"></div>
-    </div>
-
-    <nav>
-        <div class="logo">BABYLON//OS</div>
-        <ul class="nav-links">
-            <li><a class="active">portfolio</a></li>
-            <li><a>blog</a></li>
-            <li><a>cv</a></li>
-        </ul>
-    </nav>
-
-    <div class="container">
-        <div class="sidebar">
-            <div class="card">
-                <h2>PORTFOLIO</h2>
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Island, niaumsioioit utrpd.</p>
-                <a class="learn-more">Learn more</a>
-            </div>
-            <div class="card">
-                <h2>BLOG</h2>
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor nommod inncidunt utcidunt ut labore et dolore magna aliqua. Ut ne ros evoiztxpat.</p>
-                <a class="learn-more">Learn more</a>
-            </div>
-            <div class="card">
-                <h2>CV</h2>
-                <p>Lorem ipsum dolor sit amet, consectetur alorner adipiscing elit, sed nontmy my ficst in cididunt et dolond magna aliquannem aliquiam ed content, quis anicnt ut riariameter them dtam.</p>
-            </div>
-        </div>
-    </div>
+    <div id="error-message">WebGPU is not supported or enabled in your browser.</div>
+    <canvas id="webgpu-canvas"></canvas>
 
     <script type="module">
-        const shaderSource = `
-            struct Uniforms {
-                time: f32,
-                sunY: f32,
-                res: vec2<f32>
-            }
-            @group(0) @binding(0) var<uniform> uniforms: Uniforms;
+        // --- WGSL Shaders ---
+        const shaderCode = `
+        struct VertexOutput {
+            @builtin(position) position: vec4f,
+            @location(0) uv: vec2f,
+        };
 
-            struct VertexOutput {
-                @builtin(position) pos: vec4<f32>,
-                @location(0) uv: vec2<f32>
-            }
+        @vertex
+        fn vs_main(@builtin(vertex_index) vertexIndex: u32) -> VertexOutput {
+            var pos = array<vec2f, 4>(
+                vec2f(-1.0, -1.0),
+                vec2f( 1.0, -1.0),
+                vec2f(-1.0,  1.0),
+                vec2f( 1.0,  1.0)
+            );
+            var uvs = array<vec2f, 4>(
+                vec2f(0.0, 1.0),
+                vec2f(1.0, 1.0),
+                vec2f(0.0, 0.0),
+                vec2f(1.0, 0.0)
+            );
 
-            @vertex
-            fn vs_main(@builtin(vertex_index) idx: u32) -> VertexOutput {
-                var pos = array<vec2<f32>, 3>(vec2<f32>(-1.,-1.), vec2<f32>(3.,-1.), vec2<f32>(-1.,3.));
-                var out: VertexOutput;
-                out.pos = vec4<f32>(pos[idx], 0.0, 1.0);
-                out.uv = pos[idx] * 0.5 + 0.5;
-                return out;
-            }
-
-            fn hash(p: vec2<f32>) -> f32 {
-                var p3 = fract(vec3<f32>(p.xyx) * vec3<f32>(0.1031, 0.1030, 0.0973));
-                p3 += dot(p3, p3.yzx + 33.33);
-                return fract((p3.x + p3.y) * p3.z);
-            }
-
-            fn noise(p: vec2<f32>) -> f32 {
-                let i = floor(p);
-                let f = fract(p);
-                let u = f * f * (3.0 - 2.0 * f);
-                return mix(mix(hash(i + vec2<f32>(0.0,0.0)), hash(i + vec2<f32>(1.0,0.0)), u.x),
-                           mix(hash(i + vec2<f32>(0.0,1.0)), hash(i + vec2<f32>(1.0,1.0)), u.x), u.y);
-            }
-
-            fn fbm(p: vec2<f32>) -> f32 {
-                var value = 0.0; var amplitude = 0.5; var freq = 1.0;
-                for (var i = 0; i < 4; i++) {
-                    value += amplitude * noise(p * freq);
-                    amplitude *= 0.5; freq *= 2.0;
-                }
-                return value;
-            }
-
-            fn sdBox(p: vec2<f32>, b: vec2<f32>) -> f32 {
-                let d = abs(p) - b;
-                return length(max(d, vec2<f32>(0.0))) + min(max(d.x, d.y), 0.0);
-            }
-
-            @fragment
-            fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-                let uv = in.uv;
-                let aspect = uniforms.res.x / uniforms.res.y;
-                let p = (uv * 2.0 - 1.0) * vec2<f32>(aspect, 1.0);
-
-                let horizonY = -0.55;
-                let isWater = p.y < horizonY;
-                
-                var renderP = p;
-                if (isWater) {
-                    let waveOffset = sin(p.y * 50.0 - uniforms.time * 2.5) * 0.006 
-                                   + sin(p.x * 20.0 + uniforms.time * 1.2) * 0.002;
-                    renderP.y = horizonY * 2.0 - p.y + waveOffset;
-                    renderP.x = p.x + sin(p.y * 100.0 + uniforms.time * 3.5) * 0.003;
-                }
-
-                // --- 1. CLEAN GRADIENT SKY WITH DYNAMIC RISING SUN ---
-                let skyTopBlue    = vec3<f32>(0.35, 0.62, 0.85); 
-                let skyBottomBlue = vec3<f32>(0.55, 0.78, 0.93); 
-                let risingSunGlow = vec3<f32>(0.96, 0.45, 0.12); 
-                let waterClearBlue= vec3<f32>(0.22, 0.48, 0.76); 
-
-                var sky = mix(skyBottomBlue, skyTopBlue, smoothstep(-0.55, 0.8, renderP.y));
-                
-                // Dynamic Sun Position controlled smoothly by runtime uniform value
-                let sunCenter = vec2<f32>(-0.05, uniforms.sunY); 
-                let sunDistance = length(renderP - sunCenter);
-                
-                // Exponential glow interpolation
-                let sunAura = exp(-3.2 * sunDistance);
-                sky = mix(sky, risingSunGlow, sunAura * 0.98);
-
-                // Morning mist cloud layers
-                let cloudNoise = fbm(vec2<f32>(renderP.x * 1.5 + uniforms.time * 0.02, renderP.y * 6.0));
-                sky = mix(sky, vec3<f32>(0.95, 0.75, 0.65), cloudNoise * 0.22 * smoothstep(-0.5, 0.5, renderP.y));
-
-                var finalScene = sky;
-
-                // --- 2. MOUNT FUJI LAYER CONFIGURATION ---
-                let fujiX = renderP.x + 0.05;
-                let fujiSlope = 0.58 * exp(-2.0 * abs(fujiX)) + 0.06 * exp(-0.3 * abs(fujiX));
-                
-                var fujiHeight = fujiSlope - 0.25;
-                let isPlateau = fujiHeight > 0.26;
-                if (isPlateau) { fujiHeight = 0.26; }
-
-                let fujiBaseColor = vec3<f32>(0.12, 0.26, 0.48);
-                let snowColor     = vec3<f32>(0.94, 0.96, 0.98);
-
-                if (renderP.y < fujiHeight && renderP.y > horizonY) {
-                    finalScene = fujiBaseColor;
-                    
-                    let snowCutoff = 0.12;
-                    if (renderP.y > fujiHeight - snowCutoff) {
-                        let erosionPattern = noise(vec2<f32>(fujiX * 40.0, renderP.y * 10.0)) * 0.03 
-                                           + noise(vec2<f32>(fujiX * 120.0, 1.0)) * 0.01;
-                        if (renderP.y + erosionPattern > 0.14 || isPlateau) {
-                            finalScene = mix(snowColor, risingSunGlow, 0.1); 
-                        }
-                    }
-                }
-
-                // --- 3. MID-GROUND MOUNTAIN SILHOUETTES ---
-                let midRidgeY = -0.38 + noise(vec2<f32>(renderP.x * 4.5, 2.3)) * 0.06 
-                                      + noise(vec2<f32>(renderP.x * 20.0, 0.5)) * 0.008;
-                if (renderP.y < midRidgeY && renderP.y > horizonY) {
-                    finalScene = vec3<f32>(0.07, 0.18, 0.34);
-                }
-
-                let lowRidgeY = -0.48 + noise(vec2<f32>(renderP.x * 3.0 + 8.0, 5.1)) * 0.04;
-                if (renderP.y < lowRidgeY && renderP.y > horizonY) {
-                    finalScene = vec3<f32>(0.04, 0.11, 0.24);
-                }
-
-                // --- 4. FOREGROUND STRUCTURES (Torii, Lighthouse & Shores) ---
-                let darkSilhouette = vec3<f32>(0.01, 0.03, 0.08);
-                
-                let toriiPos = renderP - vec2<f32>(-0.45, -0.56);
-                let postL = sdBox(toriiPos - vec2<f32>(-0.07, 0.0), vec2<f32>(0.006, 0.04));
-                let postR = sdBox(toriiPos - vec2<f32>(0.07, 0.0), vec2<f32>(0.006, 0.04));
-                let lintel1 = sdBox(toriiPos - vec2<f32>(0.0, 0.035), vec2<f32>(0.09, 0.005));
-                let lintel2 = sdBox(toriiPos - vec2<f32>(0.0, 0.045), vec2<f32>(0.10, 0.004));
-                let toriiSDF = min(min(min(postL, postR), lintel1), lintel2);
-                if (toriiSDF < 0.0 && renderP.y > horizonY) {
-                    finalScene = darkSilhouette;
-                }
-
-                let lightPos = renderP - vec2<f32>(-0.75, -0.46);
-                let base = sdBox(lightPos - vec2<f32>(0.0, -0.05), vec2<f32>(0.022, 0.06));
-                let shaft = sdBox(lightPos - vec2<f32>(0.0, 0.04), vec2<f32>(0.015, 0.05));
-                let gallery = sdBox(lightPos - vec2<f32>(0.0, 0.095), vec2<f32>(0.02, 0.006));
-                let lantern = sdBox(lightPos - vec2<f32>(0.0, 0.12), vec2<f32>(0.012, 0.018));
-                let dome = length(lightPos - vec2<f32>(0.0, 0.138)) - 0.012;
-                let lighthouseSDF = min(min(min(min(base, shaft), gallery), lantern), dome);
-                if (lighthouseSDF < 0.0 && renderP.y > horizonY) {
-                    finalScene = vec3<f32>(0.85, 0.88, 0.92);
-                }
-
-                let beamPos = lightPos - vec2<f32>(0.0, 0.12);
-                if (beamPos.y > 0.0 && beamPos.y < 0.4 && abs(beamPos.x) < beamPos.y * 1.8 + 0.01) {
-                    let beamGlow = (1.0 - (beamPos.y / 0.4)) * 0.35;
-                    finalScene += vec3<f32>(1.0, 0.85, 0.45) * beamGlow;
-                }
-
-                let shoreY = -0.57 + noise(vec2<f32>(renderP.x * 8.0, 9.1)) * 0.025;
-                if (renderP.y < shoreY && renderP.y > horizonY) {
-                    finalScene = darkSilhouette;
-                }
-
-                // --- 5. REFLECTION & WATER RENDERING ---
-                if (isWater) {
-                    let waterBaseColor = mix(waterClearBlue, finalScene, 0.45) * 0.72 + vec3<f32>(0.01, 0.02, 0.05);
-                    
-                    // The light tracker mirrors the vertical translation of the sun
-                    let specularTrack = exp(-5.0 * abs(p.x - sunCenter.x)) * (sin(p.y * 160.0 + uniforms.time * 5.0) * 0.12 + 0.15);
-                    return vec4<f32>(waterBaseColor + risingSunGlow * max(specularTrack, 0.0), 1.0);
-                }
-
-                return vec4<f32>(finalScene, 1.0);
-            }
-        `;
-
-        // --- 🕊️ Client Javascript Bird Flight Sequencer ---
-        function triggerBirdGroupFlight() {
-            const swarm = document.getElementById('birdSwarm');
-            const minHeight = 12; 
-            const maxHeight = 35;
-            const flightHeight = Math.random() * (maxHeight - minHeight) + minHeight;
-            swarm.style.top = `${flightHeight}vh`;
-
-            swarm.style.animation = 'none';
-            swarm.offsetHeight; 
-            
-            swarm.style.display = 'block';
-            swarm.style.animation = 'flyAcross 18s linear forwards';
+            var out: VertexOutput;
+            out.position = vec4f(pos[vertexIndex], 0.0, 1.0);
+            out.uv = uvs[vertexIndex];
+            return out;
         }
 
-        setInterval(triggerBirdGroupFlight, 28000); 
-        setTimeout(triggerBirdGroupFlight, 4000);   
+        // Fractional Brownian Motion for procedural terrain generation
+        fn hash(p: vec2f) -> f32 {
+            var p3 = fract(vec3f(p.xyx) * 0.1031);
+            p3 += dot(p3, p3.yzx + 33.33);
+            return fract((p3.x + p3.y) * p3.z);
+        }
 
-        // --- Core WebGPU Application Initialization Engine ---
+        fn noise(p: vec2f) -> f32 {
+            let i = floor(p);
+            let f = fract(p);
+            let u = f * f * (3.0 - 2.0 * f);
+            return mix(mix(hash(i + vec2f(0.0,0.0)), hash(i + vec2f(1.0,0.0)), u.x),
+                       mix(hash(i + vec2f(0.0,1.0)), hash(i + vec2f(1.0,1.0)), u.x), u.y);
+        }
+
+        fn fbm(p: vec2f) -> f32 {
+            var v = 0.0;
+            var a = 0.5;
+            var shift = vec2f(100.0);
+            var m = mat2x2f(1.6,  1.2, -1.2,  1.6);
+            var coord = p;
+            for (var i = 0; i < 5; i++) {
+                v += a * noise(coord);
+                coord = m * coord + shift;
+                a *= 0.5;
+            }
+            return v;
+        }
+
+        @fragment
+        fn fs_main(@location(0) uv: vec2f) -> @location(0) vec4f {
+            // 1. Sky Gradient (Deep Indigo to soft Purple-Pink near the horizon)
+            let skyTop = vec3f(0.22, 0.29, 0.58);
+            let skyBottom = vec3f(0.42, 0.35, 0.59);
+            var finalColor = mix(skyTop, skyBottom, uv.y);
+
+            // 2. The Clouds / Sunset Glow behind the ridge
+            let cloudNoise = fbm(uv * vec2f(3.0, 5.0) + vec2f(0.0, -0.1));
+            let glowColor = vec3f(0.98, 0.45, 0.41); // Vibrant pink/orange
+            let glowMask = smoothstep(0.3, 0.8, cloudNoise) * smoothstep(0.3, 0.7, 1.0 - uv.y);
+            finalColor = mix(finalColor, glowColor, glowMask * 0.65);
+
+            // 3. Shape of Kanchenjunga (Procedural math mimicking the sharp, steep pyramid peak)
+            let xOffset = uv.x - 0.46; // Center the peak slightly to the left
+            
+            // Base pyramid structure
+            var mountainShape = 0.72 - 1.2 * abs(xOffset); 
+            
+            // Add right shoulder ridge drop
+            if (xOffset > 0.05) {
+                mountainShape -= (xOffset - 0.05) * 0.5;
+            }
+            
+            // Distort shape using FBM noise to make it rugged and organic
+            let ruggedness = fbm(uv * vec2f(8.0, 4.0)) * 0.12;
+            let microRuggedness = fbm(uv * vec2f(45.0, 20.0)) * 0.015;
+            mountainShape += ruggedness + microRuggedness;
+
+            // 4. Render Mountain Layer
+            if (uv.y > (1.0 - mountainShape)) {
+                // Base mountain rock color (shadowed violet-blue)
+                let mountainBaseColor = vec3f(0.35, 0.31, 0.48);
+                
+                // Snow distribution based on steepness and high-frequency noise
+                let snowNoise = fbm(uv * vec2f(35.0, 35.0));
+                let isSnow = smoothstep(0.35, 0.6, snowNoise);
+                
+                // Directional lighting mimicking the right-side sunset glow
+                // Slopes facing right get the bright sunset illumination
+                let slopeX = dpdx(mountainShape); 
+                let lightingDirection = smoothstep(-0.005, 0.015, xOffset + snowNoise * 0.05);
+                
+                let snowShadow = vec3f(0.72, 0.70, 0.85); // Left-side shaded snow
+                let snowLit = vec3f(0.98, 0.71, 0.64);    // Right-side sun-kissed snow (glowing pink)
+                
+                let snowFinalColor = mix(snowShadow, snowLit, lightingDirection);
+                var mountainSurface = mix(mountainBaseColor, snowFinalColor, isSnow * 0.85);
+                
+                // Extra intense Alpenglow bloom on the extreme upper-right peak facets
+                if (xOffset > -0.1 && uv.y < 0.65) {
+                    let peakGlow = smoothstep(-0.05, 0.2, xOffset) * (1.0 - smoothstep(0.4, 0.65, uv.y));
+                    mountainSurface = mix(mountainSurface, vec3f(0.99, 0.52, 0.45), peakGlow * 0.4);
+                }
+
+                finalColor = mountainSurface;
+            }
+
+            // 5. Foreground Treeline Silhouette (Dark pine shapes)
+            let treeLayer = 0.24 + fbm(vec2f(uv.x * 25.0, 0.0)) * 0.05 + sin(uv.x * 12.0) * 0.03;
+            if (uv.y > (1.0 - treeLayer)) {
+                finalColor = vec3f(0.01, 0.02, 0.05); // Almost pure black silhouette
+            }
+
+            return vec4f(finalColor, 1.0);
+        }
+        `;
+
+        // --- WebGPU Initialization Boilerplate ---
         async function init() {
             if (!navigator.gpu) {
-                document.getElementById('gpuCanvas').style.display = 'none';
-                document.body.style.background = 'linear-gradient(to bottom, #366888, #060913)';
+                document.getElementById('error-message').style.display = 'block';
                 return;
             }
 
             const adapter = await navigator.gpu.requestAdapter();
-            const device = await adapter.requestDevice();
-            const canvas = document.getElementById("gpuCanvas");
-            const context = canvas.getContext("webgpu");
-            const format = navigator.gpu.getPreferredCanvasFormat();
-            
-            const dpr = window.devicePixelRatio || 1;
-            canvas.width = window.innerWidth * dpr; canvas.height = window.innerHeight * dpr;
-            context.configure({ device, format, alphaMode: "opaque" });
-
-            const module = device.createShaderModule({ code: shaderSource });
-            const pipeline = device.createRenderPipeline({
-                layout: "auto",
-                vertex: { module, entryPoint: "vs_main" },
-                fragment: { module, entryPoint: "fs_main", targets: [{ format }] }
-            });
-
-            const uniformBuffer = device.createBuffer({ size: 16, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
-            const bindGroup = device.createBindGroup({
-                layout: pipeline.getBindGroupLayout(0),
-                entries: [{ binding: 0, resource: { buffer: uniformBuffer } }]
-            });
-
-            const uniformData = new Float32Array(4);
-
-            function draw(time) {
-                const elapsedSeconds = time * 0.001;
-                
-                // --- SLOW RISE MATHEMATICS ---
-                // Starts deep behind the mountain layout base (-0.65)
-                // Gradually climbs upward over a slow timeline up into clear visibility (-0.15)
-                const startY = -0.65;
-                const endY = -0.15;
-                const speedMultiplier = 0.04; // Smaller scales create a slower, more cinematic ascent rate
-                
-                // Linear progression clamped to peak height
-                const calculatedSunY = Math.min(startY + (elapsedSeconds * speedMultiplier), endY);
-
-                uniformData[0] = elapsedSeconds;
-                uniformData[1] = calculatedSunY; // Dispatched dynamically to shader uniform layout context
-                uniformData[2] = canvas.width;
-                uniformData[3] = canvas.height;
-                device.queue.writeBuffer(uniformBuffer, 0, uniformData);
-
-                const encoder = device.createCommandEncoder();
-                const pass = encoder.beginRenderPass({
-                    colorAttachments: [{
-                        view: context.getCurrentTexture().createView(),
-                        loadOp: "clear", storeOp: "store",
-                        clearValue: { r: 0.06, g: 0.09, b: 0.19, a: 1.0 }
-                    }]
-                });
-
-                pass.setPipeline(pipeline);
-                pass.setBindGroup(0, bindGroup);
-                pass.draw(3);
-                pass.end();
-                device.queue.submit([encoder.finish()]);
-
-                requestAnimationFrame(draw);
+            if (!adapter) {
+                document.getElementById('error-message').style.display = 'block';
+                return;
             }
-            requestAnimationFrame(draw);
+            const device = await adapter.requestDevice();
 
-            window.addEventListener("resize", () => {
-                canvas.width = window.innerWidth * dpr; canvas.height = window.innerHeight * dpr;
+            const canvas = document.getElementById('webgpu-canvas');
+            const context = canvas.getContext('webgpu');
+
+            // Handle high-DPI displays safely
+            const devicePixelRatio = window.devicePixelRatio || 1;
+            canvas.width = window.innerWidth * devicePixelRatio;
+            canvas.height = window.innerHeight * devicePixelRatio;
+
+            const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
+            context.configure({
+                device,
+                format: presentationFormat,
+                alphaMode: 'premultiplied',
+            });
+
+            const shaderModule = device.createShaderModule({
+                code: shaderCode,
+            });
+
+            const pipeline = device.createRenderPipeline({
+                layout: 'auto',
+                vertex: {
+                    module: shaderModule,
+                    entryPoint: 'vs_main',
+                },
+                fragment: {
+                    module: shaderModule,
+                    entryPoint: 'fs_main',
+                    targets: [{
+                        format: presentationFormat,
+                    }],
+                },
+                primitive: {
+                    topology: 'triangle-strip',
+                },
+            });
+
+            function render() {
+                const commandEncoder = device.createCommandEncoder();
+                const textureView = context.getCurrentTexture().createView();
+
+                const renderPassDescriptor = {
+                    colorAttachments: [{
+                        view: textureView,
+                        clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
+                        loadOp: 'clear',
+                        storeOp: 'store',
+                    }],
+                };
+
+                const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
+                passEncoder.setPipeline(pipeline);
+                passEncoder.draw(4); // Draw full-screen quad (via 4 vertex indices)
+                passEncoder.end();
+
+                device.queue.submit([commandEncoder.finish()]);
+            }
+
+            // Render static landscape image
+            render();
+
+            // Adjust sizing seamlessly on window resize
+            window.addEventListener('resize', () => {
+                canvas.width = window.innerWidth * devicePixelRatio;
+                canvas.height = window.innerHeight * devicePixelRatio;
+                render();
             });
         }
+
         init();
     </script>
 </body>
