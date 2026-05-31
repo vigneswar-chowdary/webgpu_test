@@ -190,8 +190,9 @@
     let globalTime = 0;
     
     const BIRD_AVG_SPEED = 2.0; 
-    const MAX_WIND_VAL = BIRD_AVG_SPEED / 2; // 1.0
-    const MIN_WIND_VAL = BIRD_AVG_SPEED / 4; // 0.5
+    const MAX_WIND_VAL = 1.0;
+    const MIN_WIND_VAL = 0.5;
+    const GRAVITY = 0; // Removed gravity effect
     
     let frameCount = 0;
     let windIntensity = MIN_WIND_VAL;
@@ -256,73 +257,74 @@
         this.active = false;
       }
       
-      reset(clusterOriginX, clusterOriginY, isClusterMember = false) {
+      reset(clusterOriginX, clusterOriginY, isClusterMember = false, clusterDensity = 1) {
         this.active = true;
         
         const spawnXRange = [1000, 1100];
         const randomX = spawnXRange[0] + Math.random() * (spawnXRange[1] - spawnXRange[0]);
-        
-        const faceTopY = 180 + (randomX - 800) * 0.5;
-        const faceBottomY = 450;
-        const spanHeight = faceBottomY - faceTopY;
-        const randomY = faceTopY + (spanHeight * (0.2 + Math.random() * 0.6));
+        const patchTopY = 180 + (randomX - 800) * 0.5;
+        const patchBottomY = patchTopY + 100;
+        const randomY = patchTopY + (patchBottomY - patchTopY) * (0.2 + Math.random() * 0.6);
 
         const baseViewX = isClusterMember ? clusterOriginX : randomX;
         const baseViewY = isClusterMember ? clusterOriginY : randomY;
 
-        this.spawnX = svgOffsetX + (baseViewX * svgScaleX);
-        this.x = this.spawnX + (isGusting ? (Math.random() - 0.5) * 45 : (Math.random() - 0.5) * 15);
-        this.y = svgOffsetY + (baseViewY * svgScaleY) + (isGusting ? (Math.random() - 0.5) * 25 : (Math.random() - 0.5) * 10);
+        const windScaleFactor = (windIntensity / MAX_WIND_VAL);
+        const densityFactor = clusterDensity * (1 + windScaleFactor);
         
-        this.size = (Math.random() * 2.5 + 0.5); 
-        this.baseSpeed = (1.8 + Math.random() * 3.0); 
+        const spreadX = (Math.random() - 0.5) * (30 * densityFactor);
+        const spreadY = (Math.random() - 0.5) * (20 * densityFactor);
+
+        this.x = svgOffsetX + (baseViewX * svgScaleX) + spreadX;
+        this.y = svgOffsetY + (baseViewY * svgScaleY) + spreadY;
+        
+        this.size = (Math.random() * 2.0 + 0.5) * (0.8 + clusterDensity * 0.7); 
+        
+        const minMistSpeed = BIRD_AVG_SPEED / 12;
+        const maxMistSpeed = BIRD_AVG_SPEED / 3;
+        this.baseSpeed = minMistSpeed + Math.random() * (maxMistSpeed - minMistSpeed);
+        
         this.life = 0;
-
-        // Dynamic Lifespan Logic:
-        // Longer lifespan near the summit (left), decreasing as spawn point moves right.
-        const spawnPosFactor = (randomX - 1000) / 100; // 0 at 1000, 1 at 1100
-        const baseLifespan = 2.0 + Math.random() * 1.5;
-        this.maxLife = baseLifespan * (1.2 - spawnPosFactor * 0.6); // Roughly 2.4 - 3.5 on left, 1.2 - 1.8 on right
-
+        this.maxLife = Math.random() * 2.0 + 1.5;
         this.transitionPoint = 0.15 + Math.random() * 0.1; 
         
         this.angle = Math.random() * Math.PI * 2;
-        this.angleSpeed = (Math.random() - 0.5) * 0.1;
+        this.angleSpeed = (Math.random() - 0.5) * 0.05;
+        
+        this.vx = 0;
+        this.vy = 0;
 
         const colors = ['rgba(255, 235, 230, ', 'rgba(255, 255, 255, ', 'rgba(240, 240, 255, '];
         this.baseColor = colors[Math.floor(Math.random() * colors.length)];
-        
-        this.gravityAccum = 0;
       }
       
       update() {
         if (!this.active) return;
         
         const lifeFactor = this.life / this.maxLife;
-        let vx, vy;
-
-        // Progressive Gravity Logic:
-        // Updated to 1/3 of previous value (0.06 / 3 = 0.02)
-        const distFromSpawn = Math.max(0, this.x - this.spawnX);
-        const gravityForce = (distFromSpawn / width) * 0.02; 
-        this.gravityAccum += gravityForce;
 
         if (lifeFactor < this.transitionPoint) {
-          const liftAngle = -(9 + Math.random() * 2) * (Math.PI / 180); // 9-11 degrees up
-          vx = Math.cos(liftAngle) * this.baseSpeed * windIntensity;
-          vy = Math.sin(liftAngle) * this.baseSpeed * windIntensity;
+          const liftAngleDeg = -(9 + Math.random() * 2);
+          const liftAngle = liftAngleDeg * (Math.PI / 180);
+          this.vx = Math.cos(liftAngle) * this.baseSpeed * windIntensity;
+          this.vy = Math.sin(liftAngle) * this.baseSpeed * windIntensity;
         } else {
-          const fallAngle = (9 + Math.random() * 5) * (Math.PI / 180);
-          vx = Math.abs(Math.cos(fallAngle)) * (this.baseSpeed * 0.9) * windIntensity;
-          vy = Math.abs(Math.sin(fallAngle)) * (this.baseSpeed * 0.9) * windIntensity;
+          // Drifts purely based on wind and the rise gradient (maintained as part of the established trajectory)
+          const driftAngleDeg = (5 + Math.random() * 2); // Shallower drift since gravity is removed
+          const driftAngle = driftAngleDeg * (Math.PI / 180);
+          const currentWindIntensity = Math.max(windIntensity, 0.3);
           
-          vx += Math.abs(Math.cos(this.angle)) * 0.1;
-          vy += Math.sin(this.angle) * 0.1;
+          const windVx = Math.abs(Math.cos(driftAngle)) * (this.baseSpeed * 0.8) * currentWindIntensity;
+          const windVy = Math.abs(Math.sin(driftAngle)) * (this.baseSpeed * 0.8) * currentWindIntensity;
+          
+          this.vx = windVx + Math.cos(this.angle) * (this.baseSpeed * 0.1);
+          // vy is purely horizontal/slight-rise drift + wind + noise. Gravity (was life * GRAVITY) is now 0.
+          this.vy = windVy + Math.sin(this.angle) * (this.baseSpeed * 0.05); 
         }
 
         this.angle += this.angleSpeed;
-        this.x += vx;
-        this.y += vy + this.gravityAccum;
+        this.x += this.vx;
+        this.y += this.vy;
         this.life += 0.008;
         
         if (this.life >= this.maxLife || this.x > width + 50 || this.y > height + 50) {
@@ -332,9 +334,9 @@
       
       draw() {
         if (!this.active) return;
-        let opacity = 0.45;
-        if (this.life < 0.15) opacity = (this.life / 0.15) * 0.45;
-        else if (this.life > this.maxLife - 0.6) opacity = ((this.maxLife - this.life) / 0.6) * 0.45;
+        let opacity = 0.5;
+        if (this.life < 0.2) opacity = (this.life / 0.2) * 0.5;
+        else if (this.life > this.maxLife - 0.8) opacity = ((this.maxLife - this.life) / 0.8) * 0.5;
         if (opacity < 0) opacity = 0;
         
         ctx.fillStyle = this.baseColor + opacity + ')';
@@ -381,7 +383,7 @@
       }
     }
     
-    const MAX_PARTICLES = 2500;
+    const MAX_PARTICLES = 3000;
     for (let i = 0; i < MAX_PARTICLES; i++) {
       particles.push(new MistParticle());
     }
@@ -432,16 +434,21 @@
       
       windIntensity += (targetWind - windIntensity) * 0.03;
       
-      let spawnQuota = Math.floor(windIntensity * 20); 
+      let spawnQuota = Math.floor(windIntensity * 25); 
       
-      if (isGusting && Math.random() < 0.4) {
-          const clusterSize = Math.floor(15 + Math.random() * 25);
+      if (isGusting && Math.random() < 0.45) {
+          const clusterDensity = 0.3 + Math.random() * 1.7; 
+          const clusterSize = Math.floor((20 + Math.random() * 40) * clusterDensity);
+          
           const cX = 1000 + Math.random() * 100;
-          const cY = 180 + (cX - 800) * 0.5;
+          const patchTopY = 180 + (cX - 800) * 0.5;
+          const patchBottomY = patchTopY + 100;
+          const cY = patchTopY + (patchBottomY - patchTopY) * (0.2 + Math.random() * 0.6);
+
           let count = 0;
           for(let i = 0; i < particles.length && count < clusterSize; i++) {
               if (!particles[i].active) {
-                  particles[i].reset(cX, cY, true);
+                  particles[i].reset(cX, cY, true, clusterDensity);
                   count++;
               }
           }
@@ -450,7 +457,7 @@
 
       for(let i = 0; i < particles.length && spawnQuota > 0; i++) {
           if (!particles[i].active) {
-              particles[i].reset();
+              particles[i].reset(null, null, false, 0.5 + Math.random() * 0.5);
               spawnQuota--;
           }
       }
