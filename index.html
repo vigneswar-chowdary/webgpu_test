@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kanchenjunga Sunset - WebGPU</title>
+    <title>Kanchenjunga Sunset - WebGPU Fixed</title>
     <style>
         body, html {
             margin: 0;
@@ -40,7 +40,6 @@
     <canvas id="webgpu-canvas"></canvas>
 
     <script type="module">
-        // --- WGSL Shaders ---
         const shaderCode = `
         struct VertexOutput {
             @builtin(position) position: vec4f,
@@ -68,7 +67,6 @@
             return out;
         }
 
-        // Fractional Brownian Motion for procedural terrain generation
         fn hash(p: vec2f) -> f32 {
             var p3 = fract(vec3f(p.xyx) * 0.1031);
             p3 += dot(p3, p3.yzx + 33.33);
@@ -99,73 +97,64 @@
 
         @fragment
         fn fs_main(@location(0) uv: vec2f) -> @location(0) vec4f {
-            // 1. Sky Gradient (Deep Indigo to soft Purple-Pink near the horizon)
+            // 1. Sky Gradient (Deep Indigo to soft Purple-Pink)
             let skyTop = vec3f(0.22, 0.29, 0.58);
             let skyBottom = vec3f(0.42, 0.35, 0.59);
             var finalColor = mix(skyTop, skyBottom, uv.y);
 
-            // 2. The Clouds / Sunset Glow behind the ridge
+            // 2. Clouds / Sunset Alpenglow behind the mountain
             let cloudNoise = fbm(uv * vec2f(3.0, 5.0) + vec2f(0.0, -0.1));
-            let glowColor = vec3f(0.98, 0.45, 0.41); // Vibrant pink/orange
+            let glowColor = vec3f(0.98, 0.45, 0.41); 
             let glowMask = smoothstep(0.3, 0.8, cloudNoise) * smoothstep(0.3, 0.7, 1.0 - uv.y);
             finalColor = mix(finalColor, glowColor, glowMask * 0.65);
 
-            // 3. Shape of Kanchenjunga (Procedural math mimicking the sharp, steep pyramid peak)
-            let xOffset = uv.x - 0.46; // Center the peak slightly to the left
-            
-            // Base pyramid structure
+            // 3. Shape calculation of Kanchenjunga
+            let xOffset = uv.x - 0.46; 
             var mountainShape = 0.72 - 1.2 * abs(xOffset); 
             
-            // Add right shoulder ridge drop
             if (xOffset > 0.05) {
                 mountainShape -= (xOffset - 0.05) * 0.5;
             }
             
-            // Distort shape using FBM noise to make it rugged and organic
             let ruggedness = fbm(uv * vec2f(8.0, 4.0)) * 0.12;
             let microRuggedness = fbm(uv * vec2f(45.0, 20.0)) * 0.015;
             mountainShape += ruggedness + microRuggedness;
 
-            // 4. Render Mountain Layer
-            if (uv.y > (1.0 - mountainShape)) {
-                // Base mountain rock color (shadowed violet-blue)
-                let mountainBaseColor = vec3f(0.35, 0.31, 0.48);
-                
-                // Snow distribution based on steepness and high-frequency noise
-                let snowNoise = fbm(uv * vec2f(35.0, 35.0));
-                let isSnow = smoothstep(0.35, 0.6, snowNoise);
-                
-                // Directional lighting mimicking the right-side sunset glow
-                // Slopes facing right get the bright sunset illumination
-                let slopeX = dpdx(mountainShape); 
-                let lightingDirection = smoothstep(-0.005, 0.015, xOffset + snowNoise * 0.05);
-                
-                let snowShadow = vec3f(0.72, 0.70, 0.85); // Left-side shaded snow
-                let snowLit = vec3f(0.98, 0.71, 0.64);    // Right-side sun-kissed snow (glowing pink)
-                
-                let snowFinalColor = mix(snowShadow, snowLit, lightingDirection);
-                var mountainSurface = mix(mountainBaseColor, snowFinalColor, isSnow * 0.85);
-                
-                // Extra intense Alpenglow bloom on the extreme upper-right peak facets
-                if (xOffset > -0.1 && uv.y < 0.65) {
-                    let peakGlow = smoothstep(-0.05, 0.2, xOffset) * (1.0 - smoothstep(0.4, 0.65, uv.y));
-                    mountainSurface = mix(mountainSurface, vec3f(0.99, 0.52, 0.45), peakGlow * 0.4);
-                }
+            // 4. Compute shading textures ahead of time (avoids implicit derivative branch errors)
+            let snowNoise = fbm(uv * vec2f(35.0, 35.0));
+            let isSnow = smoothstep(0.35, 0.6, snowNoise);
+            let lightingDirection = smoothstep(-0.005, 0.015, xOffset + snowNoise * 0.05);
+            
+            let snowShadow = vec3f(0.72, 0.70, 0.85); 
+            let snowLit = vec3f(0.98, 0.71, 0.64);    
+            let snowFinalColor = mix(snowShadow, snowLit, lightingDirection);
+            
+            let mountainBaseColor = vec3f(0.35, 0.31, 0.48);
+            var mountainSurface = mix(mountainBaseColor, snowFinalColor, isSnow * 0.85);
+            
+            // Add extra intense orange alpenglow highlights to the right peaks
+            let peakGlow = smoothstep(-0.05, 0.2, xOffset) * (1.0 - smoothstep(0.4, 0.65, uv.y));
+            let mountainSurfaceWithGlow = mix(mountainSurface, vec3f(0.99, 0.52, 0.45), peakGlow * 0.4);
 
-                finalColor = mountainSurface;
+            // Apply mountain layer based on height mask
+            if (uv.y > (1.0 - mountainShape)) {
+                if (xOffset > -0.1 && uv.y < 0.65) {
+                    finalColor = mountainSurfaceWithGlow;
+                } else {
+                    finalColor = mountainSurface;
+                }
             }
 
-            // 5. Foreground Treeline Silhouette (Dark pine shapes)
+            // 5. Foreground Treeline Silhouette
             let treeLayer = 0.24 + fbm(vec2f(uv.x * 25.0, 0.0)) * 0.05 + sin(uv.x * 12.0) * 0.03;
             if (uv.y > (1.0 - treeLayer)) {
-                finalColor = vec3f(0.01, 0.02, 0.05); // Almost pure black silhouette
+                finalColor = vec3f(0.01, 0.02, 0.05); 
             }
 
             return vec4f(finalColor, 1.0);
         }
         `;
 
-        // --- WebGPU Initialization Boilerplate ---
         async function init() {
             if (!navigator.gpu) {
                 document.getElementById('error-message').style.display = 'block';
@@ -182,7 +171,6 @@
             const canvas = document.getElementById('webgpu-canvas');
             const context = canvas.getContext('webgpu');
 
-            // Handle high-DPI displays safely
             const devicePixelRatio = window.devicePixelRatio || 1;
             canvas.width = window.innerWidth * devicePixelRatio;
             canvas.height = window.innerHeight * devicePixelRatio;
@@ -231,16 +219,14 @@
 
                 const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
                 passEncoder.setPipeline(pipeline);
-                passEncoder.draw(4); // Draw full-screen quad (via 4 vertex indices)
+                passEncoder.draw(4);
                 passEncoder.end();
 
                 device.queue.submit([commandEncoder.finish()]);
             }
 
-            // Render static landscape image
             render();
 
-            // Adjust sizing seamlessly on window resize
             window.addEventListener('resize', () => {
                 canvas.width = window.innerWidth * devicePixelRatio;
                 canvas.height = window.innerHeight * devicePixelRatio;
