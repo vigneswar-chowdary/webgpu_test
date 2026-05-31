@@ -211,17 +211,20 @@
 
     // Constellation parameters
     let wordPoints = [];
-    let animationState = 'steady'; // steady, twinkling, converging, holding, dispersing, waiting
+    let animationState = 'waiting'; 
     let animationTimer = 0;
-    let currentWaitingLimit = 600; // Default 10s
+    let currentWaitingLimit = 600; 
+    let persistentStarsIndices = [];
+    let willPersistent = false;
 
     const STATE_TIMES = {
-      steady: 120,      // Start as steady points
-      twinkling: 120,   // Begin to twinkle
-      converging: 150,  // Move into name
-      holding: 240,     // Stay as name
-      dispersing: 150,  // Back to sky
-      waiting: 600      // Wait for next cycle
+      waiting: 600,     // Gap between cycles (10s+)
+      emerging: 180,    // Emergence and pre-twinkle (3-10s randomized)
+      converging: 300,  // Moving to name formation
+      holding: 240,     // Twinkle as name
+      dispersing: 300,  // Move out but stay lit
+      lingering: 300,   // Stay in sky after dispersion (5-20s randomized)
+      fading: 180       // Final fade out
     };
 
     function resize() {
@@ -246,7 +249,6 @@
       initStars();
     }
 
-    // Boundary check for sky spawning
     function getMountainBoundary(screenX) {
       const svgX = (screenX - svgOffsetX) / svgScaleX;
       let peakY = 800;
@@ -296,42 +298,50 @@
       }
     }
 
+    function getRandomSkyPos() {
+      let sx, sy, mY;
+      let attempts = 0;
+      do {
+        sx = Math.random() * width;
+        sy = Math.random() * height;
+        mY = getMountainBoundary(sx);
+        attempts++;
+      } while (sy > mY - 20 && attempts < 50);
+      return { x: sx, y: sy };
+    }
+
     function initStars() {
       stars = [];
-      const starCount = Math.max(wordPoints.length, 400);
+      const starCount = Math.max(wordPoints.length, 500);
       for (let i = 0; i < starCount; i++) {
-        let sx, sy, mY;
-        let attempts = 0;
-        do {
-          sx = Math.random() * width;
-          sy = Math.random() * height;
-          mY = getMountainBoundary(sx);
-          attempts++;
-        } while (sy > mY - 15 && attempts < 15);
-
+        const pos = getRandomSkyPos();
         stars.push({
-          x: sx,
-          y: sy,
+          x: pos.x,
+          y: pos.y,
           targetX: 0,
           targetY: 0,
-          originX: sx,
-          originY: sy,
+          originX: pos.x,
+          originY: pos.y,
           size: Math.random() * 1.5 + 0.5,
-          opacity: 0.5 + Math.random() * 0.5,
-          twinkleSpeed: 0.03 + Math.random() * 0.07,
-          isTwinkler: Math.random() > 0.4,
-          active: true
+          opacity: 0,
+          twinkleSpeed: 0.05 + Math.random() * 0.1,
+          isTwinkler: Math.random() > 0.2,
+          hasTarget: false,
+          isPersistent: false
         });
       }
       
-      for (let i = 0; i < stars.length; i++) {
-        if (i < wordPoints.length) {
-          stars[i].targetX = wordPoints[i].x;
-          stars[i].targetY = wordPoints[i].y;
-          stars[i].hasTarget = true;
-        } else {
-          stars[i].hasTarget = false;
-        }
+      const indices = Array.from({length: stars.length}, (_, i) => i);
+      for (let i = indices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [indices[i], indices[j]] = [indices[j], indices[i]];
+      }
+
+      for (let i = 0; i < wordPoints.length && i < stars.length; i++) {
+        const s = stars[indices[i]];
+        s.targetX = wordPoints[i].x;
+        s.targetY = wordPoints[i].y;
+        s.hasTarget = true;
       }
     }
 
@@ -339,76 +349,124 @@
       animationTimer++;
       let limit = STATE_TIMES[animationState];
       if (animationState === 'waiting') limit = currentWaitingLimit;
-      
+
       if (animationTimer >= limit) {
         animationTimer = 0;
         switch(animationState) {
-          case 'steady': animationState = 'twinkling'; break;
-          case 'twinkling': animationState = 'converging'; break;
-          case 'converging': animationState = 'holding'; break;
-          case 'holding': animationState = 'dispersing'; break;
-          case 'dispersing': 
-            animationState = 'waiting'; 
-            currentWaitingLimit = 600 + Math.floor(Math.random() * 300); // 10-15s
+          case 'waiting': 
+            animationState = 'emerging'; 
+            STATE_TIMES.emerging = Math.floor((Math.random() * 7 + 3) * 60); 
+            willPersistent = Math.random() > 0.6;
+            resetStarOrigins(); 
             break;
-          case 'waiting': animationState = 'steady'; resetStarPositions(); break;
+          case 'emerging': 
+            animationState = 'converging'; 
+            break;
+          case 'converging': 
+            animationState = 'holding'; 
+            break;
+          case 'holding': 
+            animationState = 'dispersing'; 
+            break;
+          case 'dispersing': 
+            animationState = 'lingering'; 
+            STATE_TIMES.lingering = Math.floor((Math.random() * 15 + 5) * 60);
+            break;
+          case 'lingering': 
+            animationState = 'fading'; 
+            break;
+          case 'fading': 
+            animationState = 'waiting'; 
+            currentWaitingLimit = 600 + Math.floor(Math.random() * 600); 
+            break;
         }
       }
 
       const progress = animationTimer / limit;
 
-      stars.forEach(s => {
-        // Handle Twinkling Logic
-        if (animationState === 'twinkling' || animationState === 'converging' || animationState === 'holding') {
-           if (s.isTwinkler) {
-             const tProgress = animationState === 'twinkling' ? progress : 1.0;
-             const baseOp = 0.6;
-             const varOp = Math.abs(Math.sin(Date.now() * s.twinkleSpeed * 0.05)) * 0.4;
-             s.opacity = baseOp + (varOp * tProgress);
-           } else {
-             s.opacity = 0.8;
-           }
-        } else {
-           // Steady or waiting states
-           s.opacity = 0.7;
+      stars.forEach((s, idx) => {
+        // Star Occlusion check: ensure we don't draw if below mountain boundary
+        const mountainY = getMountainBoundary(s.x);
+        const isBelowMountain = s.y > mountainY - 2;
+
+        if (animationState === 'waiting') {
+          if (willPersistent && s.isPersistent) {
+              s.opacity = 0.5 + Math.sin(Date.now() * s.twinkleSpeed * 0.05) * 0.3;
+          } else {
+              s.opacity = 0;
+          }
+          return;
         }
 
-        // Handle Movement Logic
-        if (animationState === 'converging' && s.hasTarget) {
-          s.x += (s.targetX - s.x) * 0.04;
-          s.y += (s.targetY - s.y) * 0.04;
-        } else if (animationState === 'dispersing' && s.hasTarget) {
-          s.x += (s.originX - s.x) * 0.03;
-          s.y += (s.originY - s.y) * 0.03;
-        } else if (animationState === 'steady' || animationState === 'waiting') {
-           // Very slow background drift only if sky allows
-           const driftX = Math.sin(Date.now() * 0.0005 + s.size) * 0.02;
-           const testX = s.x + driftX;
-           const mY = getMountainBoundary(testX);
-           if (s.y < mY - 5) {
-             s.x = testX;
-             s.originX = s.x; // Update origin for dispersal target
-           }
+        if (animationState === 'emerging') {
+          // Fade in to background sky positions and twinkle
+          const targetOpacity = isBelowMountain ? 0 : (0.7 + Math.sin(Date.now() * s.twinkleSpeed * 0.05) * 0.3);
+          s.opacity = Math.min(progress * 1.5, targetOpacity);
+          s.x = s.originX;
+          s.y = s.originY;
+        }
+        else if (animationState === 'converging') {
+          // Move from origin to word targets
+          if (s.hasTarget) {
+            s.x += (s.targetX - s.x) * 0.05;
+            s.y += (s.targetY - s.y) * 0.05;
+          }
+          const targetOpacity = isBelowMountain ? 0 : (0.7 + Math.sin(Date.now() * s.twinkleSpeed * 0.05) * 0.3);
+          s.opacity = targetOpacity;
+        } 
+        else if (animationState === 'holding') {
+          // Stay at word and twinkle
+          if (s.hasTarget) {
+            s.x = s.targetX;
+            s.y = s.targetY;
+          }
+          const targetOpacity = isBelowMountain ? 0 : (0.8 + Math.sin(Date.now() * s.twinkleSpeed * 0.05) * 0.2);
+          s.opacity = targetOpacity;
+        } 
+        else if (animationState === 'dispersing') {
+          // Disperse towards new random origins
+          if (s.hasTarget) {
+            s.x += (s.originX - s.x) * 0.03;
+            s.y += (s.originY - s.y) * 0.03;
+          }
+          const targetOpacity = isBelowMountain ? 0 : (0.7 + Math.sin(Date.now() * s.twinkleSpeed * 0.05) * 0.3);
+          s.opacity = targetOpacity;
+        }
+        else if (animationState === 'lingering') {
+          // Stay at origins and twinkle before fading
+          s.x = s.originX;
+          s.y = s.originY;
+          const targetOpacity = isBelowMountain ? 0 : (0.7 + Math.sin(Date.now() * s.twinkleSpeed * 0.05) * 0.3);
+          s.opacity = targetOpacity;
+        }
+        else if (animationState === 'fading') {
+          // Final fade out
+          const targetOpacity = isBelowMountain ? 0 : (0.7 + Math.sin(Date.now() * s.twinkleSpeed * 0.05) * 0.3);
+          let fadeOutFactor = (1 - progress);
+          
+          if (willPersistent && s.isPersistent) {
+            // Persistent stars stay at half strength
+            s.opacity = Math.max(0.4, targetOpacity * fadeOutFactor);
+          } else {
+            s.opacity = Math.max(0, targetOpacity * fadeOutFactor);
+          }
         }
       });
     }
 
-    function resetStarPositions() {
-      stars.forEach(s => {
-        let sx, sy, mY;
-        let attempts = 0;
-        do {
-          sx = Math.random() * width;
-          sy = Math.random() * height;
-          mY = getMountainBoundary(sx);
-          attempts++;
-        } while (sy > mY - 15 && attempts < 15);
+    function resetStarOrigins() {
+      persistentStarsIndices = [];
+      stars.forEach((s, idx) => {
+        const pos = getRandomSkyPos();
+        s.originX = pos.x;
+        s.originY = pos.y;
+        s.x = pos.x;
+        s.y = pos.y;
+        s.isPersistent = false;
         
-        s.originX = sx;
-        s.originY = sy;
-        if (animationState === 'steady') {
-            s.x = sx;
-            s.y = sy;
+        // Define a few stars at the very top as potential persistent candidates
+        if (pos.y < height * 0.15 && Math.random() < 0.1) {
+          s.isPersistent = true;
         }
       });
     }
@@ -416,6 +474,7 @@
     function drawStars() {
       starCtx.clearRect(0, 0, width, height);
       stars.forEach(s => {
+        if (s.opacity <= 0) return;
         starCtx.globalAlpha = s.opacity;
         starCtx.fillStyle = '#fff';
         starCtx.beginPath();
@@ -428,7 +487,6 @@
     function getYOnForest(xPercent) {
       let x = xPercent * 1000;
       let yInViewbox;
-      
       if (x > 500) {
         let t = (x - 500) / 500;
         yInViewbox = (1-t)*(1-t)*180 + 2*(1-t)*t*220 + t*t*200;
@@ -436,7 +494,6 @@
         let t = x / 500;
         yInViewbox = 190 + (180 - 190) * Math.pow(t, 0.8); 
       }
-      
       const forestHeight = height * 0.3;
       const rootedYInViewbox = yInViewbox + 35; 
       const yPixelsFromBottom = (250 - rootedYInViewbox) * (forestHeight / 250);
