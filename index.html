@@ -190,8 +190,9 @@
     let globalTime = 0;
     
     const BIRD_AVG_SPEED = 2.0; 
-    const MAX_WIND_VAL = BIRD_AVG_SPEED / 2; // 1.0
-    const MIN_WIND_VAL = BIRD_AVG_SPEED / 4; // 0.5
+    const MAX_PARTICLE_SPEED = BIRD_AVG_SPEED / 2.0; // 1.0 (Exactly 1/2 bird speed)
+    const MAX_WIND_VAL = 1.0;
+    const MIN_WIND_VAL = 0.5;
     
     let frameCount = 0;
     let windIntensity = MIN_WIND_VAL;
@@ -268,7 +269,6 @@
         const baseViewX = isClusterMember ? clusterOriginX : randomX;
         const baseViewY = isClusterMember ? clusterOriginY : randomY;
 
-        // Dynamic Mist Scaling: Cluster radius and particle size increase with wind intensity
         const windScaleFactor = (windIntensity / MAX_WIND_VAL);
         const spreadX = isGusting ? (Math.random() - 0.5) * (45 * windScaleFactor) : (Math.random() - 0.5) * 15;
         const spreadY = isGusting ? (Math.random() - 0.5) * (25 * windScaleFactor) : (Math.random() - 0.5) * 10;
@@ -276,15 +276,19 @@
         this.x = svgOffsetX + (baseViewX * svgScaleX) + spreadX;
         this.y = svgOffsetY + (baseViewY * svgScaleY) + spreadY;
         
-        // Voluminous Scaling: Base particle size scales with wind
         this.size = (Math.random() * 2.5 + 0.5) * (1 + (windScaleFactor - 0.5)); 
-        this.baseSpeed = (1.8 + Math.random() * 3.0); 
+        // 2. Cap the maximum speed of the misty particles at exactly 1/2 the speed of the birds (MAX_PARTICLE_SPEED)
+        // 3. Remove any minimum speed requirement
+        this.baseSpeed = Math.random() * MAX_PARTICLE_SPEED; 
         this.life = 0;
         this.maxLife = Math.random() * 1.8 + 1.2;
         this.transitionPoint = 0.15 + Math.random() * 0.1; 
         
         this.angle = Math.random() * Math.PI * 2;
         this.angleSpeed = (Math.random() - 0.5) * 0.1;
+        
+        // 1. Randomize the fall gradient for mist particles between 9 and 18 degrees.
+        this.customFallAngle = (9 + Math.random() * 9) * (Math.PI / 180);
 
         const colors = ['rgba(255, 235, 230, ', 'rgba(255, 255, 255, ', 'rgba(240, 240, 255, '];
         this.baseColor = colors[Math.floor(Math.random() * colors.length)];
@@ -297,19 +301,15 @@
         let vx, vy;
 
         if (lifeFactor < this.transitionPoint) {
-          // Trajectory 1: Upward 9-11 degrees
           const liftAngle = -(9 + Math.random() * 2) * (Math.PI / 180);
           vx = Math.cos(liftAngle) * this.baseSpeed * windIntensity;
           vy = Math.sin(liftAngle) * this.baseSpeed * windIntensity;
         } else {
-          // Wind-Aligned Trajectory: 
-          // Trajectory 2: Settle and fall along rightward slopes 9-14 degrees
-          // horizontal movement strictly left-to-right (cos(angle) is always positive in this range)
-          const fallAngle = (9 + Math.random() * 5) * (Math.PI / 180);
+          // 1. Apply the randomized fall gradient (9-18 degrees)
+          const fallAngle = this.customFallAngle;
           vx = Math.abs(Math.cos(fallAngle)) * (this.baseSpeed * 0.9) * windIntensity;
           vy = Math.abs(Math.sin(fallAngle)) * (this.baseSpeed * 0.9) * windIntensity;
           
-          // Slight chaotic drift, but biased heavily by wind to prevent "pushing back"
           vx += Math.abs(Math.cos(this.angle)) * 0.15;
           vy += Math.sin(this.angle) * 0.15;
         }
@@ -426,8 +426,7 @@
       
       windIntensity += (targetWind - windIntensity) * 0.03;
       
-      // Spawning Logic
-      let spawnQuota = Math.floor(windIntensity * 18); // Slightly higher quota for more volume
+      let spawnQuota = Math.floor(windIntensity * 18);
       
       if (isGusting && Math.random() < 0.4) {
           const windVolumeMultiplier = (windIntensity / MAX_WIND_VAL) * 1.5;
