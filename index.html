@@ -259,14 +259,11 @@
       reset(clusterOriginX, clusterOriginY, isClusterMember = false) {
         this.active = true;
         
-        // Origin: Height 0.2 to 0.8 of the white snowy patch on the right face
-        // The white snowy patch roughly spans X: 1000 to 1200, Y: 270 to 380 in SVG space
         const spawnXRange = [1000, 1100];
         const randomX = spawnXRange[0] + Math.random() * (spawnXRange[1] - spawnXRange[0]);
         
-        // Define vertical span based on requested 0.2 to 0.8 height of that face section
-        const faceTopY = 180 + (randomX - 800) * 0.5; // Top ridge line
-        const faceBottomY = 450; // Approximated bottom of lit face section
+        const faceTopY = 180 + (randomX - 800) * 0.5;
+        const faceBottomY = 450;
         const spanHeight = faceBottomY - faceTopY;
         const randomY = faceTopY + (spanHeight * (0.2 + Math.random() * 0.6));
 
@@ -278,10 +275,15 @@
         this.y = svgOffsetY + (baseViewY * svgScaleY) + (isGusting ? (Math.random() - 0.5) * 25 : (Math.random() - 0.5) * 10);
         
         this.size = (Math.random() * 2.5 + 0.5); 
-        // Horizontal mist speed restored to previous randomized state (no longer halved)
         this.baseSpeed = (1.8 + Math.random() * 3.0); 
         this.life = 0;
-        this.maxLife = Math.random() * 1.8 + 1.2;
+
+        // Dynamic Lifespan Logic:
+        // Longer lifespan near the summit (left), decreasing as spawn point moves right.
+        const spawnPosFactor = (randomX - 1000) / 100; // 0 at 1000, 1 at 1100
+        const baseLifespan = 2.0 + Math.random() * 1.5;
+        this.maxLife = baseLifespan * (1.2 - spawnPosFactor * 0.6); // Roughly 2.4 - 3.5 on left, 1.2 - 1.8 on right
+
         this.transitionPoint = 0.15 + Math.random() * 0.1; 
         
         this.angle = Math.random() * Math.PI * 2;
@@ -300,18 +302,16 @@
         let vx, vy;
 
         // Progressive Gravity Logic:
-        // Gravity increases as the particle moves right from its spawn point.
-        // Max value is exactly 1/2 of the gravity value used in Screen 13 (0.12 -> 0.06)
+        // Updated to 1/3 of previous value (0.06 / 3 = 0.02)
         const distFromSpawn = Math.max(0, this.x - this.spawnX);
-        const gravityForce = (distFromSpawn / width) * 0.06; 
+        const gravityForce = (distFromSpawn / width) * 0.02; 
         this.gravityAccum += gravityForce;
 
         if (lifeFactor < this.transitionPoint) {
-          const liftAngle = -(9 + Math.random() * 2) * (Math.PI / 180);
+          const liftAngle = -(9 + Math.random() * 2) * (Math.PI / 180); // 9-11 degrees up
           vx = Math.cos(liftAngle) * this.baseSpeed * windIntensity;
           vy = Math.sin(liftAngle) * this.baseSpeed * windIntensity;
         } else {
-          // Downward trajectory influenced by progressive gravity
           const fallAngle = (9 + Math.random() * 5) * (Math.PI / 180);
           vx = Math.abs(Math.cos(fallAngle)) * (this.baseSpeed * 0.9) * windIntensity;
           vy = Math.abs(Math.sin(fallAngle)) * (this.baseSpeed * 0.9) * windIntensity;
